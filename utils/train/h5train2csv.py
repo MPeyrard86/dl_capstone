@@ -2,13 +2,18 @@
 Command line utility for converting the provided .mat training data into a more convenient CSV format.
 """
 
+from __future__ import print_function
+
 import h5py
 import os
 import sys
 
-filename = sys.argv[1]
-assert os.path.isfile(filename)
-output_filename = sys.argv[2]
+# TODO: Remove hard coding?
+MATFILE = 'digitStruct.mat'
+CSVFILE = 'digitStruct.csv'
+
+def display_usage():
+    print("Usage: python h5train2csv.py <data-folder>")
 
 def parse_str_obj(str_obj):
     return ''.join(chr(x) for x in str_obj)
@@ -46,21 +51,39 @@ def get_training_sample_bounding_boxes(file, bbox_ref):
     return bboxes
 
 
-digit_struct_file = h5py.File(filename, 'r')
-digit_struct = digit_struct_file['digitStruct']
-dataset_names = digit_struct['name']
-dataset_bounding_boxes = digit_struct['bbox']
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        display_usage()
+        sys.exit(1)
 
-assert dataset_names.shape == dataset_bounding_boxes.shape
-num_training_examples = dataset_names.shape[0]
+    data_folder = sys.argv[1]
+    if not os.path.isdir(data_folder):
+        print("The provided data folder %s does not exist." % data_folder)
+        sys.exit(1)
 
-training_samples = list()
-for i in xrange(num_training_examples):
-    training_sample_filename = get_training_sample_filename(digit_struct_file, dataset_names[i][0])
-    training_sample_bboxes = get_training_sample_bounding_boxes(digit_struct_file, dataset_bounding_boxes[i][0])
-    training_samples.append((training_sample_filename, training_sample_bboxes))
+    input_matfile = os.path.join(data_folder, MATFILE)
+    if not os.path.isfile(input_matfile):
+        print("The provided data folder %s does not contain a file called %s." % (data_folder, MATFILE))
+        sys.exit(1)
 
-with open(output_filename, 'w') as output_file:
-    output_file.write('filename,label\n')
-    for filename, bboxes in training_samples:
-        output_file.write('{},{}\n'.format(filename, ''.join([str(b['label']) for b in bboxes])))
+    digit_struct_file = h5py.File(input_matfile, 'r')
+    digit_struct = digit_struct_file['digitStruct']
+    dataset_names = digit_struct['name']
+    dataset_bounding_boxes = digit_struct['bbox']
+
+    assert dataset_names.shape == dataset_bounding_boxes.shape
+    num_training_examples = dataset_names.shape[0]
+
+    training_samples = list()
+    for i in xrange(num_training_examples):
+        training_sample_filename = get_training_sample_filename(digit_struct_file, dataset_names[i][0])
+        training_sample_bboxes = get_training_sample_bounding_boxes(digit_struct_file, dataset_bounding_boxes[i][0])
+        training_samples.append((training_sample_filename, training_sample_bboxes))
+
+    output_csvfile = os.path.join(data_folder, CSVFILE)
+    with open(output_csvfile, 'w') as output_file:
+        output_file.write('filename,label\n')
+        for filename, bboxes in training_samples:
+            output_file.write('{},{}\n'.format(filename, ''.join([str(b['label']) for b in bboxes])))
+
+    digit_struct_file.close()
