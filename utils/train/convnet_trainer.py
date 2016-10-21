@@ -32,48 +32,9 @@ fc_size1 = 128
 
 training_shape = (training_batch_size, image_size, image_size, input_channels)
 
-# max_digits = 5
-# num_length_classes = max_digits + 2 # +2: One for 0, one for 5+.
-# num_digit_classes = 10
-
 def show_usage():
     print('Usage: python convnet_trainer.py <input CSV> <output-folder>')
 
-# def weight_variable(name, shape):
-#     return tf.Variable(tf.truncated_normal(shape, stddev=0.1))
-# def conv_weight_variable(name, shape):
-#     return tf.get_variable(name, shape, initializer=tf.contrib.layers.xavier_initializer_conv2d())
-# def bias_variable(name, shape):
-#     return tf.Variable(tf.constant(1.0, shape=shape), name=name)
-# def conv2d(X, W):
-#     return tf.nn.conv2d(X, W, strides=[1,1,1,1], padding='SAME')
-# def max_pool(X):
-#     return tf.nn.max_pool(X, ksize=[1,2,2,1], strides=[1,2,2,1], padding='SAME')
-#
-# def input_conv_layer(name, input, kernel_size, input_channels, output_channels):
-#     W_conv = conv_weight_variable("W_" + name, [kernel_size, kernel_size, input_channels, output_channels])
-#     b_conv = bias_variable("b_" + name, [output_channels])
-#     return tf.nn.relu(conv2d(input, W_conv) + b_conv)
-# def conv_layer(name, input, kernel_size, input_channels, output_channels, drop_prob, pool=False):
-#     W_conv = conv_weight_variable("W_" + name, [kernel_size, kernel_size, input_channels, output_channels])
-#     b_conv = bias_variable("b_" + name, [output_channels])
-#     layer = tf.nn.relu(conv2d(input, W_conv) + b_conv)
-#     return tf.nn.dropout(max_pool(layer) if pool else layer, drop_prob)
-# def flatten_layer(layer):
-#     layer_shape = layer.get_shape()
-#     nf = layer_shape[1:4].num_elements()
-#     flattened_layer = tf.reshape(layer, [-1, nf])
-#     return flattened_layer, nf
-# def dense_layer(name, input, input_features, output_features, drop_prob):
-#     W_fc = weight_variable("W_" + name, [input_features, output_features])
-#     b_fc = bias_variable("b_" + name, [output_features])
-#     return tf.nn.dropout(tf.nn.relu(tf.matmul(input, W_fc) + b_fc), drop_prob)
-# def output_layer(name, input, input_features, output_features):
-#     W_fc = weight_variable("W_" + name, [input_features, output_features])
-#     b_fc = bias_variable("b_" + name, [output_features])
-#     layer = tf.matmul(input, W_fc) + b_fc
-#     return layer
-#
 def accuracy(predictions, labels):
   return (100.0 * np.sum(np.argmax(predictions, 1) == labels) / predictions.shape[0])
 #
@@ -139,7 +100,13 @@ with svhn_graph.as_default():
     # Initialize convolutional shapes.
     conv1_shape = [conv_kernel_size, conv_kernel_size, input_channels, conv_depth1]
     conv2_shape = [conv_kernel_size, conv_kernel_size, conv_depth1, conv_depth2]
-    conv3_shape = [conv_kernel_size, conv_kernel_size, conv_depth2, fc_size1]
+    conv3_shape = [conv_kernel_size, conv_kernel_size, conv_depth2, conv_depth3]
+
+    # Initialize output shapes.
+    num_maxpool_layers = 2
+    feature_map_dimension = image_size / 2 ** num_maxpool_layers
+    fc_size = feature_map_dimension * feature_map_dimension * conv_depth3
+    length_shape = [fc_size, num_length_classes]
 
     # Initialize convolutional weights and biases.
     W_conv1 = tf.get_variable("W_conv1", shape=conv1_shape, initializer=tf.contrib.layers.xavier_initializer_conv2d())
@@ -147,25 +114,22 @@ with svhn_graph.as_default():
     W_conv2 = tf.get_variable("W_conv2", shape=conv2_shape, initializer=tf.contrib.layers.xavier_initializer_conv2d())
     b_conv2 = tf.Variable(tf.constant(1.0, shape=[conv_depth2]), name="b_conv2")
     W_conv3 = tf.get_variable("W_conv3", shape=conv3_shape, initializer=tf.contrib.layers.xavier_initializer_conv2d())
-    b_conv3 = tf.Variable(tf.constant(1.0, shape=[fc_size1]), name="b_conv3")
-
-    # Initialize output shapes.
-    length_shape = [fc_size1, num_length_classes]
+    b_conv3 = tf.Variable(tf.constant(1.0, shape=[conv_depth3]), name="b_conv3")
 
     # Initialize output weights and biases.
     W_length = tf.get_variable("W_length", shape=length_shape, initializer=tf.contrib.layers.xavier_initializer())
     b_length = tf.Variable(tf.constant(1.0, shape=[num_length_classes]), name="b_length")
 
     # Construct the CNN.
-    conv1 = tf.nn.conv2d(X_train, W_conv1, [1,1,1,1], 'VALID', name="conv1")
+    conv1 = tf.nn.conv2d(X_train, W_conv1, [1,1,1,1], 'SAME', name="conv1")
     relu1 = tf.nn.relu(conv1 + b_conv1)
     norm1 = tf.nn.local_response_normalization(relu1) # Is this needed?
     pool1 = tf.nn.max_pool(norm1, [1,2,2,1], [1,2,2,1], 'SAME')
-    conv2 = tf.nn.conv2d(pool1, W_conv2, [1,1,1,1], padding='VALID', name='conv2')
+    conv2 = tf.nn.conv2d(pool1, W_conv2, [1,1,1,1], padding='SAME', name='conv2')
     relu2 = tf.nn.relu(conv2 + b_conv2)
     norm2 = tf.nn.local_response_normalization(relu2)
     pool2 = tf.nn.max_pool(norm2, [1,2,2,1], [1,2,2,1], 'SAME')
-    conv3 = tf.nn.conv2d(pool2, W_conv3, [1,1,1,1], padding='VALID', name='conv3')
+    conv3 = tf.nn.conv2d(pool2, W_conv3, [1,1,1,1], padding='SAME', name='conv3')
     relu3 = tf.nn.relu(conv3 + b_conv3)
     drop3 = tf.nn.dropout(relu3, keep_prob)
     drop3_shape = drop3.get_shape().as_list()
@@ -176,7 +140,8 @@ with svhn_graph.as_default():
     training_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(output_length, y_length))
     global_step = tf.Variable(0)
     learning_rate = tf.train.exponential_decay(0.05, global_step, 10000, 0.95)
-    optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(training_loss, global_step=global_step)
+    # optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(training_loss, global_step=global_step)
+    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(training_loss, global_step=global_step)
 
     # Initialize the final prediction.
     training_prediction = tf.nn.softmax(output_length)
