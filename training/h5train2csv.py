@@ -8,9 +8,7 @@ import h5py
 import os
 import sys
 
-# TODO: Remove hard coding?
-MATFILE = 'digitStruct.mat'
-CSVFILE = 'digitStruct.csv'
+from training import CSVFILE, MATFILE
 
 def display_usage():
     print("Usage: python h5train2csv.py <data-folder>")
