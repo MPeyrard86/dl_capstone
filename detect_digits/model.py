@@ -63,16 +63,21 @@ def create_model(X, dropout_keep_prob, reuse):
         # TODO: Add outputs for each digit.
 
         # Create the convolutional neural network
-        conv1 = create_dropout_layer(create_conv_layer(X, W_conv1, b_conv1), dropout_keep_prob)
-        conv2 = create_dropout_layer(create_conv_layer(conv1, W_conv2, b_conv2), dropout_keep_prob)
-        conv3 = create_maxpool_layer(create_conv_layer(conv2, W_conv3, b_conv3))
-        conv4 = create_dropout_layer(create_conv_layer(conv3, W_conv4, b_conv4), dropout_keep_prob)
-        conv5 = create_dropout_layer(create_conv_layer(conv4, W_conv5, b_conv5), dropout_keep_prob)
-        conv6 = create_maxpool_layer(create_conv_layer(conv5, W_conv6, b_conv6))
-        conv7 = create_dropout_layer(create_conv_layer(conv6, W_conv7, b_conv7), dropout_keep_prob)
-        conv8 = create_dropout_layer(create_conv_layer(conv7, W_conv8, b_conv8), dropout_keep_prob)
-        conv8_flattend = flatten_conv_layer(conv8)
-        feature_layer = create_fc_layer(conv8_flattend, W_fc, b_fc)
+        conv1 = create_maxpool_layer(create_conv_layer(X, W_conv1, b_conv1))
+        conv2 = create_maxpool_layer(create_conv_layer(conv1, W_conv2, b_conv2))
+        conv3 = create_dropout_layer(create_conv_layer(conv2, W_conv3, b_conv3), dropout_keep_prob)
+        conv3_flat = flatten_conv_layer(conv3)
+        feature_layer = create_fc_layer(conv3_flat, W_fc, b_fc)
+        # conv1 = create_dropout_layer(create_conv_layer(X, W_conv1, b_conv1), dropout_keep_prob)
+        # conv2 = create_dropout_layer(create_conv_layer(conv1, W_conv2, b_conv2), dropout_keep_prob)
+        # conv3 = create_maxpool_layer(create_conv_layer(conv2, W_conv3, b_conv3))
+        # conv4 = create_dropout_layer(create_conv_layer(conv3, W_conv4, b_conv4), dropout_keep_prob)
+        # conv5 = create_dropout_layer(create_conv_layer(conv4, W_conv5, b_conv5), dropout_keep_prob)
+        # conv6 = create_maxpool_layer(create_conv_layer(conv5, W_conv6, b_conv6))
+        # conv7 = create_dropout_layer(create_conv_layer(conv6, W_conv7, b_conv7), dropout_keep_prob)
+        # conv8 = create_dropout_layer(create_conv_layer(conv7, W_conv8, b_conv8), dropout_keep_prob)
+        # conv8_flattend = flatten_conv_layer(conv8)
+        # feature_layer = create_fc_layer(conv8_flattend, W_fc, b_fc)
         # Create output layers
         length_output = create_fc_layer(feature_layer, W_length, b_length)
         return length_output

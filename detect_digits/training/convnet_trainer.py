@@ -67,6 +67,7 @@ if __name__ == '__main__':
             global_step = tf.Variable(0)
             learning_rate = tf.train.exponential_decay(0.05, global_step, 10000, 0.95)
             length_training_optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(length_training_loss, global_step=global_step)
+            # length_training_optimizer = tf.train.AdagradOptimizer(0.1).minimize(length_training_loss)
 
             length_training_prediction = tf.nn.softmax(training_output_length)
             length_validation_prediction = tf.nn.softmax(validation_output_length)
@@ -85,14 +86,14 @@ if __name__ == '__main__':
                                         dropout_keep_prob: 1.0}
                 _, _train_loss, _train_predition = session.run([length_training_optimizer, length_training_loss, length_training_prediction],
                                                                training_feed_dict)
-                _validation_prediction = session.run([length_validation_prediction], validation_feed_dict)
-                if i%2 == 0:
+                # _validation_prediction = session.run([length_validation_prediction], validation_feed_dict)
+                if i%200 == 0:
                     acc = calculate_accuracy(_train_predition, training_batch[1])
                     print("Training step %d."%(i))
-                    print("Batch training loss: %f."%(_train_loss))
-                    print("Training accuracy: %f, Cross-validation accuracy: %f."%(
-                        calculate_accuracy(_train_predition, training_batch[1]),
-                        calculate_accuracy(_validation_prediction, validation_batch[1])))
+                    print("Batch training loss: %f. Accuracy: %f."%(_train_loss, calculate_accuracy(_train_predition, training_batch[1])))
+                    # print("Training accuracy: %f, Cross-validation accuracy: %f."%(
+                    #     calculate_accuracy(_train_predition, training_batch[1]),
+                    #     calculate_accuracy(_validation_prediction, validation_batch[1])))
                     print()
 
     except:
