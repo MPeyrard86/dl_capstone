@@ -4,6 +4,7 @@ A tool used to train the convolutional neural network for my Udacity Machine Lea
 
 from __future__ import print_function
 
+import argparse
 import sys
 import time
 
@@ -37,16 +38,21 @@ def calculate_accuracy(y_pred, y_labels):
 
 if __name__ == '__main__':
     try:
-        training_batch_size = 512
-
         # Parse command line parameters
-        training_folders = get_training_folder_names()
+        parser = argparse.ArgumentParser(description="Performs training for a digit detector for the Stree-View House Numbers identification task.")
+        parser.add_argument("-t", "--training-folders", required=True, nargs="+")
+        parser.add_argument("-o", "--training-output", required=True)
+        parser.add_argument("-b", "--batch-size", required=False, type=int, default=512)
+        args = parser.parse_args()
+
+        if not os.path.isdir(args.training_output):
+            os.makedirs(args.training_output)
 
         # Load training data pointed to by command line parameters
-        print("Loading training data from sources: %s"%training_folders)
+        print("Loading training data from sources: %s"%args.training_folders)
         print("This may take a few minutes depending on how much data you loaded and how many CPU cores you have.")
         train_time_start = time.time()
-        training_data = load_training_data(training_folders)
+        training_data = load_training_data(args.training_folders)
         train_validation_split_point = int(TRAINING_RATIO * len(training_data))
         train_data = training_data[0:train_validation_split_point]
         validation_data = training_data[train_validation_split_point:]
@@ -69,12 +75,13 @@ if __name__ == '__main__':
 
         num_training_epochs = 1000000
         with tf.Session(graph=svhn_training_graph) as session:
+            checkpoint_filename = os.path.join(args.training_output, "svhn.ckpt")
             saver = tf.train.Saver()
             best_validation_accuracy = 0
             tf.initialize_all_variables().run()
             for i in xrange(num_training_epochs):
-                training_batch = sample_training(train_data, training_batch_size)
-                validation_batch = sample_training(validation_data, training_batch_size)
+                training_batch = sample_training(train_data, args.batch_size)
+                validation_batch = sample_training(validation_data, args.batch_size)
                 training_feed_dict = {X: training_batch[0],
                                       y_length: training_batch[1],
                                       dropout_keep_prob: 0.5}
@@ -89,7 +96,7 @@ if __name__ == '__main__':
                 if validation_accuracy > best_validation_accuracy:
                     best_validation_accuracy = validation_accuracy
                     print("Validation accuracy %f is best seen so far, checkpointing..."%validation_accuracy)
-                    saver.save(session, 'svhn_best_validation.ckpt')
+                    saver.save(session, checkpoint_filename)
 
                 if i%200 == 0:
                     acc = calculate_accuracy(_train_predition, training_batch[1])
