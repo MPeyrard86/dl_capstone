@@ -12,8 +12,8 @@ import tensorflow as tf
 
 from detect_digits import *
 from detect_digits.model import create_model
-from training import TRAINING_RATIO
-from training.loading import *
+from detect_digits.training import TRAINING_RATIO
+from detect_digits.training.loading import *
 
 USAGE_MESSAGE = """Usage: python convnet_trainer.py <input-data-folders>
 This script expects a set of training folders as parameters.
@@ -34,9 +34,6 @@ def sample_training(training_source, num_samples):
 def calculate_accuracy(y_pred, y_labels):
     num_correct_predictions = np.sum(np.argmax(y_pred, axis=1) == y_labels)
     return float(num_correct_predictions)/y_labels.shape[0]
-
-def accuracy(predictions, labels):
-  return (100.0 * np.sum(np.argmax(predictions, 1) == labels) / predictions.shape[0])
 
 if __name__ == '__main__':
     try:

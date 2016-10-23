@@ -8,7 +8,7 @@ import h5py
 import os
 import sys
 
-from training import CSVFILE, MATFILE
+from detect_digits.training import CSVFILE, MATFILE
 
 def display_usage():
     print("Usage: python h5train2csv.py <data-folder>")

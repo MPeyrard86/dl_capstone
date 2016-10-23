@@ -11,7 +11,7 @@ import scipy.misc
 
 from functools import partial
 
-from training import CSVFILE
+from detect_digits.training import CSVFILE
 from detect_digits import IMAGE_SIZE, NUM_LENGTH_CLASSES
 
 def validate_training_folders(training_folders):
