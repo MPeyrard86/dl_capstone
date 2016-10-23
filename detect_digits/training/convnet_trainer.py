@@ -73,9 +73,13 @@ if __name__ == '__main__':
             length_training_optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(length_training_loss, global_step=global_step)
             length_prediction = tf.nn.softmax(output_length)
 
+        # Maximum number of training epochs.
         num_training_epochs = 1000000
+        # Number of epochs we can go without improvement before we simply give up.
+        epochs_without_improvement_end_early = 50000
         with tf.Session(graph=svhn_training_graph) as session:
-            checkpoint_filename = os.path.join(args.training_output, "svhn.ckpt")
+            epochs_without_improvement = 0
+            checkpoint_filename = os.path.join(args.training_output, "svhn_model.ckpt")
             saver = tf.train.Saver()
             best_validation_accuracy = 0
             tf.initialize_all_variables().run()
@@ -88,24 +92,28 @@ if __name__ == '__main__':
                 validation_feed_dict = {X: validation_batch[0],
                                         y_length: validation_batch[1],
                                         dropout_keep_prob: 1.0}
-                _, _train_loss, _train_predition = session.run([length_training_optimizer, length_training_loss, length_prediction],
-                                                               training_feed_dict)
+                _, _train_loss, _train_prediction = session.run([length_training_optimizer, length_training_loss, length_prediction],
+                                                                training_feed_dict)
                 _validation_loss, _validation_prediction = session.run([length_training_loss, length_prediction], validation_feed_dict)
 
                 validation_accuracy = calculate_accuracy(_validation_prediction, validation_batch[1])
                 if validation_accuracy > best_validation_accuracy:
                     best_validation_accuracy = validation_accuracy
-                    print("Validation accuracy %f is best seen so far, checkpointing..."%validation_accuracy)
-                    saver.save(session, checkpoint_filename)
-
-                if i%200 == 0:
-                    acc = calculate_accuracy(_train_predition, training_batch[1])
-                    print("Training step %d."%(i))
-                    print("Training loss: %f, validation loss: %f"%(_train_loss, _validation_loss))
-                    print("Training accuracy: %f, Cross-validation accuracy: %f."%(
-                        calculate_accuracy(_train_predition, training_batch[1]),
-                        calculate_accuracy(_validation_prediction, validation_batch[1])))
+                    epochs_without_improvement = 0
+                    training_accuracy = calculate_accuracy(_train_prediction, training_batch[1])
+                    print("Validation accuracy at epoch %d is best seen so far, checkpointing..."%i)
+                    print("training loss: %f, training accuracy: %f"%(_train_loss, training_accuracy))
+                    print("validation loss: %f, validation accuracy: %f"%(_validation_loss, validation_accuracy))
                     print()
+                    saver.save(session, checkpoint_filename)
+                else:
+                    epochs_without_improvement += 1
+                    if epochs_without_improvement%1000 == 0:
+                        print("%d consecutive epochs without improvement. Current best is %f."%(
+                            epochs_without_improvement, best_validation_accuracy))
+                    if epochs_without_improvement >= epochs_without_improvement_end_early:
+                        print("No improvement in %d epochs. Terminating."%epochs_without_improvement)
+                        break
 
     except RuntimeError as x:
         print('RuntimeError: ' + x.message)
