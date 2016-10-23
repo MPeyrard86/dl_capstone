@@ -9,7 +9,3 @@ MATFILE = "digitStruct.mat"
 CSVFILE = "digitStruct.csv"
 
 TRAINING_RATIO = 0.9
-
-# TODO: Move into a model module.
-IMAGE_SIZE = 32
-NUM_LENGTH_CLASSES = 7
