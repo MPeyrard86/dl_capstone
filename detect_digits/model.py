@@ -27,7 +27,7 @@ def create_maxpool_layer(input):
     return tf.nn.max_pool(input, [1,2,2,1], [1,2,2,1], 'SAME')
 def flatten_conv_layer(input):
     input_shape = input.get_shape().as_list()
-    return tf.reshape(input, shape=[input_shape[0], input_shape[1]*input_shape[2]*input_shape[3]])
+    return tf.reshape(input, shape=[-1 if input_shape[0] is None else input_shape[0], input_shape[1]*input_shape[2]*input_shape[3]])
 
 def create_model(X, dropout_keep_prob):
     """

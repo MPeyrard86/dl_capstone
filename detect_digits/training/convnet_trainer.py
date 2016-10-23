@@ -56,8 +56,8 @@ if __name__ == '__main__':
         # Create the conv net
         svhn_training_graph = tf.Graph()
         with svhn_training_graph.as_default():
-            X = tf.placeholder(tf.float32, shape=(training_batch_size, IMAGE_SIZE, IMAGE_SIZE, IMAGE_COLOR_CHANNELS), name="X_training_image")
-            y_length = tf.placeholder(tf.int32, shape=training_batch_size, name="y_length")
+            X = tf.placeholder(tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE, IMAGE_COLOR_CHANNELS), name="X")
+            y_length = tf.placeholder(tf.int32, shape=(None), name="y_length")
             dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
             output_length = create_model(X, dropout_keep_prob)
             # Set up the training process
@@ -65,11 +65,12 @@ if __name__ == '__main__':
             global_step = tf.Variable(0)
             learning_rate = tf.train.exponential_decay(0.05, global_step, 10000, 0.95)
             length_training_optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(length_training_loss, global_step=global_step)
-
             length_prediction = tf.nn.softmax(output_length)
 
         num_training_epochs = 1000000
         with tf.Session(graph=svhn_training_graph) as session:
+            saver = tf.train.Saver()
+            best_validation_accuracy = 0
             tf.initialize_all_variables().run()
             for i in xrange(num_training_epochs):
                 training_batch = sample_training(train_data, training_batch_size)
@@ -83,6 +84,13 @@ if __name__ == '__main__':
                 _, _train_loss, _train_predition = session.run([length_training_optimizer, length_training_loss, length_prediction],
                                                                training_feed_dict)
                 _validation_loss, _validation_prediction = session.run([length_training_loss, length_prediction], validation_feed_dict)
+
+                validation_accuracy = calculate_accuracy(_validation_prediction, validation_batch[1])
+                if validation_accuracy > best_validation_accuracy:
+                    best_validation_accuracy = validation_accuracy
+                    print("Validation accuracy %f is best seen so far, checkpointing..."%validation_accuracy)
+                    saver.save(session, 'svhn_best_validation.ckpt')
+
                 if i%200 == 0:
                     acc = calculate_accuracy(_train_predition, training_batch[1])
                     print("Training step %d."%(i))
@@ -92,13 +100,11 @@ if __name__ == '__main__':
                         calculate_accuracy(_validation_prediction, validation_batch[1])))
                     print()
 
-    except:
-        raise
-    # except RuntimeError as x:
-    #     print('RuntimeError: ' + x.message)
-    #     print(USAGE_MESSAGE)
-    #     sys.exit(1)
-    # except Exception as x:
-    #     print(x)
-    #     print('Unknown error. Terminating.')
-    #     sys.exit(2)
+    except RuntimeError as x:
+        print('RuntimeError: ' + x.message)
+        print(USAGE_MESSAGE)
+        sys.exit(1)
+    except Exception as x:
+        print(x)
+        print('Unknown error. Terminating.')
+        sys.exit(2)
