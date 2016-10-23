@@ -29,14 +29,14 @@ def flatten_conv_layer(input):
     input_shape = input.get_shape().as_list()
     return tf.reshape(input, shape=[input_shape[0], input_shape[1]*input_shape[2]*input_shape[3]])
 
-def create_model(X, dropout_keep_prob, reuse):
+def create_model(X, dropout_keep_prob):
     """
 
     :param X:
     :param dropout_keep_prob:
     :return:
     """
-    with tf.variable_scope("svhn", reuse=reuse) as scope:
+    with tf.variable_scope("svhn") as scope:
         # Initialize weights and biases.
         W_conv1 = create_conv_variable("W_conv1", CONV1_SHAPE)
         b_conv1 = create_bias("b_conv1", [CONV1_DEPTH])

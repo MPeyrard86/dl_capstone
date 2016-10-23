@@ -56,21 +56,17 @@ if __name__ == '__main__':
         # Create the conv net
         svhn_training_graph = tf.Graph()
         with svhn_training_graph.as_default():
-            X_training_image = tf.placeholder(tf.float32, shape=(training_batch_size, IMAGE_SIZE, IMAGE_SIZE, IMAGE_COLOR_CHANNELS), name="X_training_image")
-            X_validation_image = tf.placeholder(tf.float32, shape=(training_batch_size, IMAGE_SIZE, IMAGE_SIZE, IMAGE_COLOR_CHANNELS), name="X_validation_image")
+            X = tf.placeholder(tf.float32, shape=(training_batch_size, IMAGE_SIZE, IMAGE_SIZE, IMAGE_COLOR_CHANNELS), name="X_training_image")
             y_length = tf.placeholder(tf.int32, shape=training_batch_size, name="y_length")
             dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
-            training_output_length = create_model(X_training_image, dropout_keep_prob, False)
-            validation_output_length = create_model(X_validation_image, dropout_keep_prob, True)
+            output_length = create_model(X, dropout_keep_prob)
             # Set up the training process
-            length_training_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(training_output_length, y_length))
+            length_training_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(output_length, y_length))
             global_step = tf.Variable(0)
             learning_rate = tf.train.exponential_decay(0.05, global_step, 10000, 0.95)
             length_training_optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(length_training_loss, global_step=global_step)
-            # length_training_optimizer = tf.train.AdagradOptimizer(0.1).minimize(length_training_loss)
 
-            length_training_prediction = tf.nn.softmax(training_output_length)
-            length_validation_prediction = tf.nn.softmax(validation_output_length)
+            length_prediction = tf.nn.softmax(output_length)
 
         num_training_epochs = 1000000
         with tf.Session(graph=svhn_training_graph) as session:
@@ -78,22 +74,22 @@ if __name__ == '__main__':
             for i in xrange(num_training_epochs):
                 training_batch = sample_training(train_data, training_batch_size)
                 validation_batch = sample_training(validation_data, training_batch_size)
-                training_feed_dict = {X_training_image: training_batch[0],
+                training_feed_dict = {X: training_batch[0],
                                       y_length: training_batch[1],
                                       dropout_keep_prob: 0.5}
-                validation_feed_dict = {X_validation_image: validation_batch[0],
+                validation_feed_dict = {X: validation_batch[0],
                                         y_length: validation_batch[1],
                                         dropout_keep_prob: 1.0}
-                _, _train_loss, _train_predition = session.run([length_training_optimizer, length_training_loss, length_training_prediction],
+                _, _train_loss, _train_predition = session.run([length_training_optimizer, length_training_loss, length_prediction],
                                                                training_feed_dict)
-                # _validation_prediction = session.run([length_validation_prediction], validation_feed_dict)
+                _validation_loss, _validation_prediction = session.run([length_training_loss, length_prediction], validation_feed_dict)
                 if i%200 == 0:
                     acc = calculate_accuracy(_train_predition, training_batch[1])
                     print("Training step %d."%(i))
-                    print("Batch training loss: %f. Accuracy: %f."%(_train_loss, calculate_accuracy(_train_predition, training_batch[1])))
-                    # print("Training accuracy: %f, Cross-validation accuracy: %f."%(
-                    #     calculate_accuracy(_train_predition, training_batch[1]),
-                    #     calculate_accuracy(_validation_prediction, validation_batch[1])))
+                    print("Training loss: %f, validation loss: %f"%(_train_loss, _validation_loss))
+                    print("Training accuracy: %f, Cross-validation accuracy: %f."%(
+                        calculate_accuracy(_train_predition, training_batch[1]),
+                        calculate_accuracy(_validation_prediction, validation_batch[1])))
                     print()
 
     except:
