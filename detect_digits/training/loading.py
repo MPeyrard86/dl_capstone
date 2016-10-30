@@ -4,6 +4,7 @@ Contains a set of utility functions for loading training data during the conv ne
 
 import itertools
 import multiprocessing
+import numpy as np
 import os
 import random
 import scipy as sp
@@ -12,7 +13,7 @@ import scipy.misc
 from functools import partial
 
 from detect_digits.training import CSVFILE
-from detect_digits import IMAGE_SIZE, NUM_LENGTH_CLASSES
+from detect_digits import *
 
 def validate_training_folders(training_folders):
     for training_folder in training_folders:
@@ -35,7 +36,12 @@ def process_training_sample(folder, training_sample_line):
     training_image = sp.misc.imread(training_image_path)
     training_image = sp.misc.imresize(training_image, (IMAGE_SIZE, IMAGE_SIZE))
     length_class = min(len(training_image_label), NUM_LENGTH_CLASSES - 1)
-    return training_image, length_class
+    # Populate the digit classifications
+    digit_classes = [int(x) for x in training_image_label]
+    # Pad the ending of the digit with the empty label
+    for _ in range(MAX_DIGITS-len(training_image_label)):
+        digit_classes.append(NUM_DIGIT_CLASSES-1)
+    return training_image, length_class, digit_classes
 
 def load_training_data(training_folders):
     """
@@ -52,7 +58,7 @@ def load_training_data(training_folders):
             training_data = thread_pool.map(partial_process_sample, itertools.islice(training_file, 1, None))
             training_data_master.append(training_data)
     thread_pool.close()
-    flattend_training_data = [training_sample for training_sublist in training_data_master for training_sample in training_sublist]
+    flattend_training_data = filter(lambda y: len(y[2]) <= MAX_DIGITS, [training_sample for training_sublist in training_data_master for training_sample in training_sublist])
     del training_data
     random.shuffle(flattend_training_data)
     return flattend_training_data

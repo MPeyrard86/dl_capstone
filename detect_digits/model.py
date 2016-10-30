@@ -2,7 +2,6 @@
 
 """
 
-import numpy as np
 import tensorflow as tf
 
 from detect_digits import *
@@ -48,26 +47,37 @@ def create_model(X, dropout_keep_prob):
         b_conv4 = create_bias("b_conv4", [CONV4_DEPTH])
         W_conv5 = create_conv_variable("W_conv5", CONV5_SHAPE)
         b_conv5 = create_bias("b_conv5", [CONV5_DEPTH])
-        W_conv6 = create_conv_variable("W_conv6", CONV6_SHAPE)
-        b_conv6 = create_bias("b_conv6", [CONV6_DEPTH])
-        W_conv7 = create_conv_variable("W_conv7", CONV7_SHAPE)
-        b_conv7 = create_bias("b_conv7", [CONV7_DEPTH])
-        W_conv8 = create_conv_variable("W_conv8", CONV8_SHAPE)
-        b_conv8 = create_bias("b_conv8", [CONV8_DEPTH])
+        # W_conv6 = create_conv_variable("W_conv6", CONV6_SHAPE)
+        # b_conv6 = create_bias("b_conv6", [CONV6_DEPTH])
+        # W_conv7 = create_conv_variable("W_conv7", CONV7_SHAPE)
+        # b_conv7 = create_bias("b_conv7", [CONV7_DEPTH])
+        # W_conv8 = create_conv_variable("W_conv8", CONV8_SHAPE)
+        # b_conv8 = create_bias("b_conv8", [CONV8_DEPTH])
         W_fc = create_fc_variable("W_fc", FC_SHAPE)
         b_fc = create_bias("b_fc", [FC_LENGTH])
 
         # Output layer weights and biases.
         W_length = create_fc_variable("W_length", [FC_LENGTH, NUM_LENGTH_CLASSES])
         b_length = create_bias("b_length", [NUM_LENGTH_CLASSES])
-        # TODO: Add outputs for each digit.
+        W_digit1 = create_fc_variable("W_digit1", [FC_LENGTH, NUM_DIGIT_CLASSES])
+        b_digit1 = create_bias("b_digit1", [NUM_DIGIT_CLASSES])
+        W_digit2 = create_fc_variable("W_digit2", [FC_LENGTH, NUM_DIGIT_CLASSES])
+        b_digit2 = create_bias("b_digit2", [NUM_DIGIT_CLASSES])
+        W_digit3 = create_fc_variable("W_digit3", [FC_LENGTH, NUM_DIGIT_CLASSES])
+        b_digit3 = create_bias("b_digit3", [NUM_DIGIT_CLASSES])
+        W_digit4 = create_fc_variable("W_digit4", [FC_LENGTH, NUM_DIGIT_CLASSES])
+        b_digit4 = create_bias("b_digit4", [NUM_DIGIT_CLASSES])
+        W_digit5 = create_fc_variable("W_digit5", [FC_LENGTH, NUM_DIGIT_CLASSES])
+        b_digit5 = create_bias("b_digit5", [NUM_DIGIT_CLASSES])
 
         # Create the convolutional neural network
         conv1 = create_maxpool_layer(create_conv_layer(X, W_conv1, b_conv1))
         conv2 = create_maxpool_layer(create_conv_layer(conv1, W_conv2, b_conv2))
         conv3 = create_dropout_layer(create_conv_layer(conv2, W_conv3, b_conv3), dropout_keep_prob)
-        conv3_flat = flatten_conv_layer(conv3)
-        feature_layer = create_fc_layer(conv3_flat, W_fc, b_fc)
+        # conv4 = create_maxpool_layer(create_conv_layer(conv3, W_conv4, b_conv4))
+        # conv5 = create_dropout_layer(create_conv_layer(conv4, W_conv5, b_conv5), dropout_keep_prob)
+        feature_layer = flatten_conv_layer(conv3)
+        feature_layer = create_fc_layer(feature_layer, W_fc, b_fc)
         # conv1 = create_dropout_layer(create_conv_layer(X, W_conv1, b_conv1), dropout_keep_prob)
         # conv2 = create_dropout_layer(create_conv_layer(conv1, W_conv2, b_conv2), dropout_keep_prob)
         # conv3 = create_maxpool_layer(create_conv_layer(conv2, W_conv3, b_conv3))
@@ -79,5 +89,10 @@ def create_model(X, dropout_keep_prob):
         # conv8_flattend = flatten_conv_layer(conv8)
         # feature_layer = create_fc_layer(conv8_flattend, W_fc, b_fc)
         # Create output layers
-        length_output = create_fc_layer(feature_layer, W_length, b_length)
-        return length_output
+        # length_output = create_fc_layer(feature_layer, W_length, b_length)
+        digit1_output = create_fc_layer(feature_layer, W_digit1, b_digit1)
+        digit2_output = create_fc_layer(feature_layer, W_digit2, b_digit2)
+        digit3_output = create_fc_layer(feature_layer, W_digit3, b_digit3)
+        digit4_output = create_fc_layer(feature_layer, W_digit4, b_digit4)
+        digit5_output = create_fc_layer(feature_layer, W_digit5, b_digit5)
+        return digit1_output, digit2_output, digit3_output, digit4_output, digit5_output
