@@ -6,93 +6,68 @@ import tensorflow as tf
 
 from detect_digits import *
 
-def create_conv_variable(name, shape):
-    return tf.get_variable(name, shape=shape, initializer=tf.contrib.layers.xavier_initializer_conv2d())
-def create_fc_variable(name, shape):
-    return tf.get_variable(name, shape=shape, initializer=tf.contrib.layers.xavier_initializer())
-def create_bias(name, shape):
+def create_convolutional_weight_tensor(name, shape):
+    return tf.get_variable(name, shape=shape, initializer=tf.contrib.layers.variance_scaling_initializer())
+def create_convolutional_bias_tensor(name, shape):
     return tf.Variable(tf.constant(1.0, shape=shape), name=name)
 
-def create_conv_layer(input, weights, biases):
-    conv = tf.nn.conv2d(input, weights, [1, 1, 1, 1], 'SAME')
-    relu = tf.nn.relu(conv + biases)
-    norm = tf.nn.local_response_normalization(relu)
-    return norm
-def create_fc_layer(input, weights, biases):
-    return tf.matmul(input, weights) + biases
-def create_dropout_layer(input, dropout_keep_prob):
-    return tf.nn.dropout(input, dropout_keep_prob)
-def create_maxpool_layer(input):
-    return tf.nn.max_pool(input, [1,2,2,1], [1,2,2,1], 'SAME')
-def flatten_conv_layer(input):
+def flatten_convolutional_layer(input):
     input_shape = input.get_shape().as_list()
-    return tf.reshape(input, shape=[-1 if input_shape[0] is None else input_shape[0], input_shape[1]*input_shape[2]*input_shape[3]])
+    return tf.reshape(input, [-1, input_shape[1] * input_shape[2] * input_shape[3]])
+def create_convolutional_layer(input, weights, biases, keep_prob):
+    layer = tf.nn.conv2d(input, weights, [1,1,1,1], 'SAME')
+    # layer = tf.nn.batch_normalization(layer) TODO: Play around with this later...
+    layer = tf.nn.local_response_normalization(layer)
+    layer = tf.nn.dropout(layer, keep_prob)
+    layer = tf.nn.relu(layer + biases)
+    layer = tf.nn.max_pool(layer, [1,2,2,1], [1,2,2,1], 'SAME')
+    return layer
+def create_fully_connected_layer(input, weights, biases, keep_prob):
+    layer = tf.matmul(input, weights) + biases
+    layer = tf.nn.dropout(layer, keep_prob)
+    return layer
+def create_output_layer(input, weights, biases):
+    return tf.matmul(input, weights) + biases
 
-def create_model(X, dropout_keep_prob):
-    """
-
-    :param X:
-    :param dropout_keep_prob:
-    :return:
-    """
+def create_convolutional_network(X, keep_prob):
     with tf.variable_scope("svhn") as scope:
-        # Initialize weights and biases.
-        W_conv1 = create_conv_variable("W_conv1", CONV1_SHAPE)
-        b_conv1 = create_bias("b_conv1", [CONV1_DEPTH])
-        W_conv2 = create_conv_variable("W_conv2", CONV2_SHAPE)
-        b_conv2 = create_bias("b_conv2", [CONV2_DEPTH])
-        W_conv3 = create_conv_variable("W_conv3", CONV3_SHAPE)
-        b_conv3 = create_bias("b_conv3", [CONV3_DEPTH])
-        W_conv4 = create_conv_variable("W_conv4", CONV4_SHAPE)
-        b_conv4 = create_bias("b_conv4", [CONV4_DEPTH])
-        W_conv5 = create_conv_variable("W_conv5", CONV5_SHAPE)
-        b_conv5 = create_bias("b_conv5", [CONV5_DEPTH])
-        # W_conv6 = create_conv_variable("W_conv6", CONV6_SHAPE)
-        # b_conv6 = create_bias("b_conv6", [CONV6_DEPTH])
-        # W_conv7 = create_conv_variable("W_conv7", CONV7_SHAPE)
-        # b_conv7 = create_bias("b_conv7", [CONV7_DEPTH])
-        # W_conv8 = create_conv_variable("W_conv8", CONV8_SHAPE)
-        # b_conv8 = create_bias("b_conv8", [CONV8_DEPTH])
-        W_fc = create_fc_variable("W_fc", FC_SHAPE)
-        b_fc = create_bias("b_fc", [FC_LENGTH])
+        # Input and hidden layer weights.
+        W_conv1 = create_convolutional_weight_tensor('W_conv1', CONV1_SHAPE)
+        b_conv1 = create_convolutional_bias_tensor('b_conv1', [CONV1_DEPTH])
+        W_conv2 = create_convolutional_weight_tensor('W_conv2', CONV2_SHAPE)
+        b_conv2 = create_convolutional_bias_tensor('b_conv2', [CONV2_DEPTH])
+        W_conv3 = create_convolutional_weight_tensor('W_conv3', CONV3_SHAPE)
+        b_conv3 = create_convolutional_bias_tensor('b_conv3', [CONV3_DEPTH])
+        W_fc1 = create_convolutional_weight_tensor('W_fc1', FC1_SHAPE)
+        b_fc1 = create_convolutional_bias_tensor('b_fc1', [FC1_LENGTH])
+        W_fc2 = create_convolutional_weight_tensor('W_fc2', FC2_SHAPE)
+        b_fc2 = create_convolutional_bias_tensor('b_fc2', [FC2_LENGTH])
 
         # Output layer weights and biases.
-        W_length = create_fc_variable("W_length", [FC_LENGTH, NUM_LENGTH_CLASSES])
-        b_length = create_bias("b_length", [NUM_LENGTH_CLASSES])
-        W_digit1 = create_fc_variable("W_digit1", [FC_LENGTH, NUM_DIGIT_CLASSES])
-        b_digit1 = create_bias("b_digit1", [NUM_DIGIT_CLASSES])
-        W_digit2 = create_fc_variable("W_digit2", [FC_LENGTH, NUM_DIGIT_CLASSES])
-        b_digit2 = create_bias("b_digit2", [NUM_DIGIT_CLASSES])
-        W_digit3 = create_fc_variable("W_digit3", [FC_LENGTH, NUM_DIGIT_CLASSES])
-        b_digit3 = create_bias("b_digit3", [NUM_DIGIT_CLASSES])
-        W_digit4 = create_fc_variable("W_digit4", [FC_LENGTH, NUM_DIGIT_CLASSES])
-        b_digit4 = create_bias("b_digit4", [NUM_DIGIT_CLASSES])
-        W_digit5 = create_fc_variable("W_digit5", [FC_LENGTH, NUM_DIGIT_CLASSES])
-        b_digit5 = create_bias("b_digit5", [NUM_DIGIT_CLASSES])
+        W_digit1 = create_convolutional_weight_tensor("W_digit1", DIGIT_OUTPUT_SHAPE)
+        b_digit1 = create_convolutional_bias_tensor("b_digit1", [NUM_DIGIT_CLASSES])
+        W_digit2 = create_convolutional_weight_tensor("W_digit2", DIGIT_OUTPUT_SHAPE)
+        b_digit2 = create_convolutional_bias_tensor("b_digit2", [NUM_DIGIT_CLASSES])
+        W_digit3 = create_convolutional_weight_tensor("W_digit3", DIGIT_OUTPUT_SHAPE)
+        b_digit3 = create_convolutional_bias_tensor("b_digit3", [NUM_DIGIT_CLASSES])
+        W_digit4 = create_convolutional_weight_tensor("W_digit4", DIGIT_OUTPUT_SHAPE)
+        b_digit4 = create_convolutional_bias_tensor("b_digit4", [NUM_DIGIT_CLASSES])
+        W_digit5 = create_convolutional_weight_tensor("W_digit5", DIGIT_OUTPUT_SHAPE)
+        b_digit5 = create_convolutional_bias_tensor("b_digit5", [NUM_DIGIT_CLASSES])
 
-        # Create the convolutional neural network
-        conv1 = create_maxpool_layer(create_conv_layer(X, W_conv1, b_conv1))
-        conv2 = create_maxpool_layer(create_conv_layer(conv1, W_conv2, b_conv2))
-        conv3 = create_dropout_layer(create_conv_layer(conv2, W_conv3, b_conv3), dropout_keep_prob)
-        # conv4 = create_maxpool_layer(create_conv_layer(conv3, W_conv4, b_conv4))
-        # conv5 = create_dropout_layer(create_conv_layer(conv4, W_conv5, b_conv5), dropout_keep_prob)
-        feature_layer = flatten_conv_layer(conv3)
-        feature_layer = create_fc_layer(feature_layer, W_fc, b_fc)
-        # conv1 = create_dropout_layer(create_conv_layer(X, W_conv1, b_conv1), dropout_keep_prob)
-        # conv2 = create_dropout_layer(create_conv_layer(conv1, W_conv2, b_conv2), dropout_keep_prob)
-        # conv3 = create_maxpool_layer(create_conv_layer(conv2, W_conv3, b_conv3))
-        # conv4 = create_dropout_layer(create_conv_layer(conv3, W_conv4, b_conv4), dropout_keep_prob)
-        # conv5 = create_dropout_layer(create_conv_layer(conv4, W_conv5, b_conv5), dropout_keep_prob)
-        # conv6 = create_maxpool_layer(create_conv_layer(conv5, W_conv6, b_conv6))
-        # conv7 = create_dropout_layer(create_conv_layer(conv6, W_conv7, b_conv7), dropout_keep_prob)
-        # conv8 = create_dropout_layer(create_conv_layer(conv7, W_conv8, b_conv8), dropout_keep_prob)
-        # conv8_flattend = flatten_conv_layer(conv8)
-        # feature_layer = create_fc_layer(conv8_flattend, W_fc, b_fc)
-        # Create output layers
-        # length_output = create_fc_layer(feature_layer, W_length, b_length)
-        digit1_output = create_fc_layer(feature_layer, W_digit1, b_digit1)
-        digit2_output = create_fc_layer(feature_layer, W_digit2, b_digit2)
-        digit3_output = create_fc_layer(feature_layer, W_digit3, b_digit3)
-        digit4_output = create_fc_layer(feature_layer, W_digit4, b_digit4)
-        digit5_output = create_fc_layer(feature_layer, W_digit5, b_digit5)
-        return digit1_output, digit2_output, digit3_output, digit4_output, digit5_output
+        # Create the convolutional network
+        conv_layer1 = create_convolutional_layer(X, W_conv1, b_conv1, keep_prob)
+        conv_layer2 = create_convolutional_layer(conv_layer1, W_conv2, b_conv2, keep_prob)
+        conv_layer3 = create_convolutional_layer(conv_layer2, W_conv3, b_conv3, keep_prob)
+        flattened_transitional_layer = flatten_convolutional_layer(conv_layer3)
+        fully_connected_layer1 = create_fully_connected_layer(flattened_transitional_layer, W_fc1, b_fc1, keep_prob)
+        fully_connected_layer2 = create_fully_connected_layer(fully_connected_layer1, W_fc2, b_fc2, keep_prob)
+
+        # Define the output layers
+        digit_output1 = create_output_layer(fully_connected_layer2, W_digit1, b_digit1)
+        digit_output2 = create_output_layer(fully_connected_layer2, W_digit2, b_digit2)
+        digit_output3 = create_output_layer(fully_connected_layer2, W_digit3, b_digit3)
+        digit_output4 = create_output_layer(fully_connected_layer2, W_digit4, b_digit4)
+        digit_output5 = create_output_layer(fully_connected_layer2, W_digit5, b_digit5)
+
+        return digit_output1, digit_output2, digit_output3, digit_output4, digit_output5

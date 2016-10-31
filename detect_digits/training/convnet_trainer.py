@@ -8,11 +8,7 @@ import argparse
 import sys
 import time
 
-import numpy as np
-import tensorflow as tf
-
-from detect_digits import *
-from detect_digits.model import create_model
+from detect_digits.model import *
 from detect_digits.training import *
 from detect_digits.training.loading import *
 
@@ -35,6 +31,7 @@ def sample_training(training_source, num_samples):
 
 def calculate_accuracy(y_pred, y_labels):
     predicted_labels = np.argmax(y_pred, 2).transpose()
+    __p = [np.array_equal(x,y) for x,y in zip(predicted_labels, y_labels)]
     num_correct_predictions = np.sum([np.array_equal(x,y) for x,y in zip(predicted_labels, y_labels)])
     return float(num_correct_predictions)/y_labels.shape[0]
 
@@ -67,14 +64,14 @@ if __name__ == '__main__':
         y_digits = tf.placeholder(tf.int32, shape=(None, MAX_DIGITS))
         dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
         # output_length = create_model(X, dropout_keep_prob)
-        digit1, digit2, digit3, digit4, digit5 = create_model(X, dropout_keep_prob)
+        digit1, digit2, digit3, digit4, digit5 = create_convolutional_network(X, dropout_keep_prob)
         # Set up the training process
         digit1_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(digit1, y_digits[:, 0]))
         digit2_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(digit2, y_digits[:, 1]))
         digit3_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(digit3, y_digits[:, 2]))
         digit4_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(digit4, y_digits[:, 3]))
         digit5_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(digit5, y_digits[:, 4]))
-        full_digit_loss = tf.add_n([digit1_loss, digit2_loss, digit3_loss, digit4_loss, digit5_loss])
+        full_digit_loss = digit1_loss + digit2_loss + digit3_loss + digit4_loss + digit5_loss
 
         global_step = tf.Variable(0)
         learning_rate = tf.train.exponential_decay(0.05, global_step, 10000, 0.95)
