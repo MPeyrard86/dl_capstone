@@ -4,16 +4,15 @@ Contains a set of utility functions for loading training data during the conv ne
 
 import itertools
 import multiprocessing
-import numpy as np
 import os
 import random
+from functools import partial
+
 import scipy as sp
 import scipy.misc
 
-from functools import partial
-
-from detect_digits.training import CSVFILE
 from detect_digits import *
+from detect_digits.training import CSVFILE
 
 def validate_training_folders(training_folders):
     for training_folder in training_folders:
