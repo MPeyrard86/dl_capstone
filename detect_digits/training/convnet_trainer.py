@@ -31,14 +31,15 @@ def sample_training(training_source, num_samples):
     sampled_digits = np.asarray([x[2] for x in sample]).reshape((num_samples, MAX_DIGITS))
     return sampled_images, sampled_lengths, sampled_digits
 
+def reformat_validation(vdata):
+    vimages = np.asarray([x[0] for x in vdata])
+    vdigits = np.asarray([x[2] for x in vdata])
+    return vimages, vdigits
+
 def calculate_accuracy(y_pred, y_labels):
     predicted_labels = np.argmax(y_pred, 2).transpose()
-    __p = [np.array_equal(x,y) for x,y in zip(predicted_labels, y_labels)]
     num_correct_predictions = np.sum([np.array_equal(x,y) for x,y in zip(predicted_labels, y_labels)])
     return float(num_correct_predictions)/y_labels.shape[0]
-
-def accuracy(predictions, labels):
-  return (100.0 * np.sum(np.argmax(predictions, 2).T == labels) / predictions.shape[1] / predictions.shape[0])
 
 if __name__ == '__main__':
     # Parse command line parameters
@@ -59,12 +60,14 @@ if __name__ == '__main__':
     train_validation_split_point = int(TRAINING_RATIO * len(training_data))
     train_data = training_data[0:train_validation_split_point]
     validation_data = training_data[train_validation_split_point:]
+    v_images, v_digits = reformat_validation(validation_data)
     train_time_end = time.time()
     print("Loaded %d training samples in %fs."%(len(training_data), train_time_end - train_time_start))
 
     svhn_training_graph = tf.Graph()
     with svhn_training_graph.as_default():
         X = tf.placeholder(tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE, IMAGE_COLOR_CHANNELS), name="X")
+        X_validation = tf.constant(v_images, dtype=tf.float32)
         y_digits = tf.placeholder(tf.int32, shape=(None, MAX_DIGITS))
 
         # Create convnet weights and biases
@@ -123,23 +126,25 @@ if __name__ == '__main__':
         # global_step = tf.Variable(0)
         # learning_rate = tf.train.exponential_decay(0.05, global_step, 10000, 0.95)
         # optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(training_loss, global_step=global_step)
-        optimizer = tf.train.AdagradOptimizer(0.01).minimize(training_loss)
+        optimizer = tf.train.AdadeltaOptimizer(0.01).minimize(training_loss)
 
         # For doing training predictions, create a model without any dropout.
         training_prediction_outputs = create_model(X, 1.0)
         training_prediction = tf.pack([tf.nn.softmax(training_prediction_outputs[i]) for i in range(len(training_prediction_outputs))])
+        validation_model = create_model(X_validation, 1.0)
+        validation_prediction = tf.pack([tf.nn.softmax(validation_model[i]) for i in range(len(validation_model))])
 
     with tf.Session(graph=svhn_training_graph) as session:
         tf.initialize_all_variables().run()
         for epoch in xrange(1, 10000000+1):
             training_batch = sample_training(train_data, args.batch_size)
-            validation_batch = sample_training(validation_data, args.batch_size)
+            # validation_batch = sample_training(validation_data, args.batch_size)
             train_feed_dict = {X: training_batch[0], y_digits: training_batch[2]}
-            validation_feed_dict = {X: validation_batch[0]}
+            # validation_feed_dict = {X: validation_batch[0]}
             _, l, train_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
-            validation_pred = session.run([training_prediction], validation_feed_dict)
+            # validation_pred = session.run([training_prediction], validation_feed_dict)
             if epoch%100 == 0:
                 print("loss at step %d: %f"%(epoch, l))
                 print("accuracy: %f%%"%(100.0* calculate_accuracy(train_pred, training_batch[2])))
-                print("validation accuracy: %f%%"%(100.0 * calculate_accuracy(validation_pred, validation_batch[2])))
+                print("validation accuracy: %f%%"%(100.0 * calculate_accuracy(validation_prediction.eval(), v_digits)))
                 print()
