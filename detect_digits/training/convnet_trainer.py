@@ -5,6 +5,7 @@ A tool used to train the convolutional neural network for my Udacity Machine Lea
 from __future__ import print_function
 
 import argparse
+import datetime
 import sys
 import time
 
@@ -123,10 +124,10 @@ if __name__ == '__main__':
 
         training_outputs = create_model(X, 0.5)
         training_loss = tf.add_n([tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(training_outputs[i], y_digits[:,i])) for i in range(len(training_outputs))])
-        # global_step = tf.Variable(0)
-        # learning_rate = tf.train.exponential_decay(0.05, global_step, 10000, 0.95)
-        # optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(training_loss, global_step=global_step)
-        optimizer = tf.train.AdadeltaOptimizer(0.01).minimize(training_loss)
+        global_step = tf.Variable(0)
+        learning_rate = tf.train.exponential_decay(0.025, global_step, 20000, 0.95)
+        optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(training_loss, global_step=global_step)
+        # optimizer = tf.train.AdamOptimizer(0.01).minimize(training_loss)
 
         # For doing training predictions, create a model without any dropout.
         training_prediction_outputs = create_model(X, 1.0)
@@ -134,17 +135,25 @@ if __name__ == '__main__':
         validation_model = create_model(X_validation, 1.0)
         validation_prediction = tf.pack([tf.nn.softmax(validation_model[i]) for i in range(len(validation_model))])
 
-    with tf.Session(graph=svhn_training_graph) as session:
-        tf.initialize_all_variables().run()
-        for epoch in xrange(1, 10000000+1):
-            training_batch = sample_training(train_data, args.batch_size)
-            # validation_batch = sample_training(validation_data, args.batch_size)
-            train_feed_dict = {X: training_batch[0], y_digits: training_batch[2]}
-            # validation_feed_dict = {X: validation_batch[0]}
-            _, l, train_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
-            # validation_pred = session.run([training_prediction], validation_feed_dict)
-            if epoch%100 == 0:
-                print("loss at step %d: %f"%(epoch, l))
-                print("accuracy: %f%%"%(100.0* calculate_accuracy(train_pred, training_batch[2])))
-                print("validation accuracy: %f%%"%(100.0 * calculate_accuracy(validation_prediction.eval(), v_digits)))
-                print()
+    training_stats_filename = os.path.join(args.training_output,  datetime.datetime.now().strftime('%Y-%m-%d-%H-%M.csv'))
+    with open(training_stats_filename, 'w') as training_stats_file:
+        training_stats_file.write("epoch,train_loss,train_acc,validation_acc")
+        with tf.Session(graph=svhn_training_graph) as session:
+            tf.initialize_all_variables().run()
+            for epoch in xrange(1, 10000000+1):
+                training_batch = sample_training(train_data, args.batch_size)
+                # validation_batch = sample_training(validation_data, args.batch_size)
+                train_feed_dict = {X: training_batch[0], y_digits: training_batch[2]}
+                # validation_feed_dict = {X: validation_batch[0]}
+                _, l, train_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
+                # validation_pred = session.run([training_prediction], validation_feed_dict)
+                if epoch%100 == 0:
+                    tacc = 100.0*calculate_accuracy(train_pred, training_batch[2])
+                    vacc = 100.0*calculate_accuracy(validation_prediction.eval(), v_digits)
+                    training_stats_file.write("%d,%f,%f,%f\n"%(epoch, l, tacc, vacc))
+                    training_stats_file.flush()
+
+                    print("training loss at step %d: %f"%(epoch, l))
+                    print("training accuracy: %f%%"%(tacc))
+                    print("validation accuracy: %f%%"%(vacc))
+                    print()

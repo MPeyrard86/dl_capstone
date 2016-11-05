@@ -3,6 +3,8 @@
   <component name="ChangeListManager">
     <list id="f0919b7a-4a14-4453-b2b0-4ea73ba8c882" name="Default" comment="" />
     <list default="true" id="87c06d24-1126-4b1c-9fca-52b13765f7a6" name="CS-3 Training image normalization" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/detect_digits/training/plot_training_results.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/detect_digits/training/convnet_trainer.py" afterPath="$PROJECT_DIR$/detect_digits/training/convnet_trainer.py" />
     </list>
     <ignored path="dl_capstone.iws" />
@@ -23,11 +25,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="convnet_trainer.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="convnet_trainer.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/detect_digits/training/convnet_trainer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="185">
-              <caret line="97" column="0" selection-start-line="97" selection-start-column="0" selection-end-line="97" selection-end-column="0" />
+            <state relative-caret-position="60">
+              <caret line="46" column="16" selection-start-line="46" selection-start-column="16" selection-end-line="46" selection-end-column="16" />
               <folding>
                 <element signature="e#124#161#0" expanded="true" />
               </folding>
@@ -35,11 +37,23 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ops.py" pinned="false" current-in-tab="false">
-        <entry file="file:///usr/local/lib/python2.7/dist-packages/tensorflow/python/framework/ops.py">
+      <file leaf-file-name="plot_training_results.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/detect_digits/training/plot_training_results.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="219">
-              <caret line="558" column="0" selection-start-line="558" selection-start-column="0" selection-end-line="558" selection-end-column="0" />
+            <state relative-caret-position="210">
+              <caret line="14" column="46" selection-start-line="14" selection-start-column="46" selection-end-line="14" selection-end-column="46" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="__builtin__.py" pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/.PyCharm2016.2/system/python_stubs/-1247972723/__builtin__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="236">
+              <caret line="2025" column="8" selection-start-line="2025" selection-start-column="8" selection-end-line="2025" selection-end-column="8" />
               <folding />
             </state>
           </provider>
@@ -48,7 +62,7 @@
       <file leaf-file-name="loading.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/detect_digits/training/loading.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="615">
+            <state relative-caret-position="465">
               <caret line="41" column="49" selection-start-line="41" selection-start-column="49" selection-end-line="41" selection-end-column="49" />
               <folding>
                 <element signature="e#109#125#0" expanded="true" />
@@ -98,13 +112,14 @@
         <option value="$PROJECT_DIR$/detect_digits/model.py" />
         <option value="$PROJECT_DIR$/detect_digits/__init__.py" />
         <option value="$PROJECT_DIR$/detect_digits/training/convnet_trainer.py" />
+        <option value="$PROJECT_DIR$/detect_digits/training/plot_training_results.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="1920" />
+    <option name="x" value="65" />
     <option name="y" value="24" />
-    <option name="width" value="1920" />
+    <option name="width" value="1855" />
     <option name="height" value="1176" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
@@ -208,7 +223,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PythonContentEntriesConfigurable" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
   </component>
   <component name="RecentsManager">
@@ -218,7 +233,7 @@
       <recent name="$PROJECT_DIR$/data/train" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.convnet_trainer (2)">
+  <component name="RunManager" selected="Python.plot_training_results">
     <configuration default="false" name="h5train2csv" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -233,40 +248,6 @@
       <module name="dl_capstone" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/training/h5train2csv.py" />
       <option name="PARAMETERS" value="$USER_HOME$/Downloads/extra" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <method />
-    </configuration>
-    <configuration default="false" name="convnet_trainer" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/utils/train" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="dl_capstone" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/utils/train/convnet_trainer.py" />
-      <option name="PARAMETERS" value="../../data/train/train.csv ." />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <method />
-    </configuration>
-    <configuration default="false" name="convnet_trainer (1)" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/training" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="dl_capstone" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/training/convnet_trainer.py" />
-      <option name="PARAMETERS" value="$USER_HOME$/Downloads/train $USER_HOME$/Downloads/extra" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <method />
     </configuration>
@@ -404,7 +385,7 @@
       <option name="USE_KEYWORD" value="false" />
       <method />
     </configuration>
-    <configuration default="false" name="convnet_trainer (2)" type="PythonConfigurationType" factoryName="Python">
+    <configuration default="false" name="convnet_trainer" type="PythonConfigurationType" factoryName="Python">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
@@ -417,21 +398,35 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="dl_capstone" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/detect_digits/training/convnet_trainer.py" />
-      <option name="PARAMETERS" value="-t $USER_HOME$/Downloads/train  -o ../../training_output -b 64" />
+      <option name="PARAMETERS" value="-t $USER_HOME$/Downloads/train  -o /mnt/storage/Stats -b 64" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <method />
     </configuration>
-    <list size="4">
-      <item index="0" class="java.lang.String" itemvalue="Python.convnet_trainer (2)" />
-      <item index="1" class="java.lang.String" itemvalue="Python.h5train2csv" />
-      <item index="2" class="java.lang.String" itemvalue="Python.convnet_trainer" />
-      <item index="3" class="java.lang.String" itemvalue="Python.convnet_trainer (1)" />
+    <configuration default="false" name="plot_training_results" type="PythonConfigurationType" factoryName="Python">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="/usr/bin/python2.7" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="dl_capstone" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/detect_digits/training/plot_training_results.py" />
+      <option name="PARAMETERS" value="/mnt/storage/Stats/2016-11-04-20-46.csv" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <method />
+    </configuration>
+    <list size="3">
+      <item index="0" class="java.lang.String" itemvalue="Python.convnet_trainer" />
+      <item index="1" class="java.lang.String" itemvalue="Python.plot_training_results" />
+      <item index="2" class="java.lang.String" itemvalue="Python.h5train2csv" />
     </list>
     <recent_temporary>
-      <list size="3">
-        <item index="0" class="java.lang.String" itemvalue="Python.convnet_trainer (1)" />
-        <item index="1" class="java.lang.String" itemvalue="Python.h5train2csv" />
-        <item index="2" class="java.lang.String" itemvalue="Python.convnet_trainer" />
+      <list size="1">
+        <item index="0" class="java.lang.String" itemvalue="Python.h5train2csv" />
       </list>
     </recent_temporary>
   </component>
@@ -445,14 +440,6 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1476467579701</updated>
-    </task>
-    <task id="CS-2" summary="Implement parameter parsing (inputs and outputs)">
-      <created>1476464483274</created>
-      <option name="issue" value="true" />
-      <option name="number" value="2" />
-      <option name="presentableId" value="CS-2" />
-      <option name="project" value="CS" />
-      <updated>1476467635681</updated>
     </task>
     <task active="true" id="CS-3" summary="Training image normalization">
       <changelist id="87c06d24-1126-4b1c-9fca-52b13765f7a6" name="CS-3 Training image normalization" comment="" />
@@ -482,10 +469,10 @@
     </servers>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1920" y="24" width="1920" height="1176" extended-state="6" />
+    <frame x="65" y="24" width="1855" height="1176" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15833333" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15795149" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3996367" sideWeight="0.5018868" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -535,13 +522,18 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/detect_digits/training/convnet_trainer.py</url>
-          <line>63</line>
+          <line>64</line>
           <option name="timeStamp" value="97" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/detect_digits/training/convnet_trainer.py</url>
-          <line>146</line>
+          <line>155</line>
           <option name="timeStamp" value="99" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/detect_digits/training/convnet_trainer.py</url>
+          <line>141</line>
+          <option name="timeStamp" value="102" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -551,7 +543,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="102" />
+      <option name="time" value="103" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
@@ -560,26 +552,6 @@
     </watches-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/detect_digits/training/loading.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="660">
-          <caret line="44" column="0" selection-start-line="44" selection-start-column="0" selection-end-line="44" selection-end-column="0" />
-          <folding>
-            <element signature="e#109#125#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/detect_digits/model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#10#33#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/detect_digits/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="405">
@@ -612,9 +584,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="870">
           <caret line="61" column="64" selection-start-line="61" selection-start-column="64" selection-end-line="61" selection-end-column="64" />
-          <folding>
-            <element signature="e#10#33#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -654,7 +623,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2160">
           <caret line="151" column="4" selection-start-line="151" selection-start-column="4" selection-end-line="151" selection-end-column="4" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -679,9 +647,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="435">
           <caret line="29" column="98" selection-start-line="29" selection-start-column="98" selection-end-line="29" selection-end-column="98" />
-          <folding>
-            <element signature="e#10#33#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -714,7 +679,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="165">
           <caret line="1764" column="25" selection-start-line="1764" selection-start-column="20" selection-end-line="1764" selection-end-column="25" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -759,7 +723,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2160">
           <caret line="151" column="4" selection-start-line="151" selection-start-column="4" selection-end-line="151" selection-end-column="4" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -811,7 +774,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-142">
           <caret line="603" column="4" selection-start-line="603" selection-start-column="4" selection-end-line="603" selection-end-column="4" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -848,7 +810,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="236">
           <caret line="1492" column="4" selection-start-line="1492" selection-start-column="4" selection-end-line="1492" selection-end-column="4" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -871,7 +832,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="132">
           <caret line="344" column="4" selection-start-line="344" selection-start-column="4" selection-end-line="344" selection-end-column="4" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -879,13 +839,12 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="357">
           <caret line="822" column="4" selection-start-line="822" selection-start-column="4" selection-end-line="822" selection-end-column="4" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/detect_digits/training/loading.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="615">
+        <state relative-caret-position="465">
           <caret line="41" column="49" selection-start-line="41" selection-start-column="49" selection-end-line="41" selection-end-column="49" />
           <folding>
             <element signature="e#109#125#0" expanded="true" />
@@ -897,15 +856,12 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="120">
           <caret line="8" column="0" selection-start-line="8" selection-start-column="0" selection-end-line="8" selection-end-column="0" />
-          <folding>
-            <element signature="e#10#33#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file:///usr/local/lib/python2.7/dist-packages/tensorflow/python/framework/ops.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="219">
+        <state relative-caret-position="7995">
           <caret line="558" column="0" selection-start-line="558" selection-start-column="0" selection-end-line="558" selection-end-column="0" />
           <folding />
         </state>
@@ -921,10 +877,28 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/detect_digits/training/convnet_trainer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="185">
-          <caret line="97" column="0" selection-start-line="97" selection-start-column="0" selection-end-line="97" selection-end-column="0" />
+        <state relative-caret-position="60">
+          <caret line="46" column="16" selection-start-line="46" selection-start-column="16" selection-end-line="46" selection-end-column="16" />
           <folding>
             <element signature="e#124#161#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.PyCharm2016.2/system/python_stubs/-1247972723/__builtin__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="236">
+          <caret line="2025" column="8" selection-start-line="2025" selection-start-column="8" selection-end-line="2025" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/detect_digits/training/plot_training_results.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="210">
+          <caret line="14" column="46" selection-start-line="14" selection-start-column="46" selection-end-line="14" selection-end-column="46" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
