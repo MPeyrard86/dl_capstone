@@ -48,6 +48,7 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--training-folders", required=True, nargs="+")
     parser.add_argument("-o", "--training-output", required=True)
     parser.add_argument("-b", "--batch-size", required=False, type=int, default=512)
+    parser.add_argument("-v", "--validation-size", required=False, type=int, default=10000)
     args = parser.parse_args()
 
     if not os.path.isdir(args.training_output):
@@ -58,9 +59,8 @@ if __name__ == '__main__':
     print("This may take a few minutes depending on how much data you loaded and how many CPU cores you have.")
     train_time_start = time.time()
     training_data = load_training_data(args.training_folders)
-    train_validation_split_point = int(TRAINING_RATIO * len(training_data))
-    train_data = training_data[0:train_validation_split_point]
-    validation_data = training_data[train_validation_split_point:]
+    train_data = training_data[args.validation_size:]
+    validation_data = training_data[:args.validation_size]
     v_images, v_digits = reformat_validation(validation_data)
     train_time_end = time.time()
     print("Loaded %d training samples in %fs."%(len(training_data), train_time_end - train_time_start))
@@ -113,7 +113,7 @@ if __name__ == '__main__':
             conv_layer4 = tf.nn.max_pool(conv_layer4, [1,2,2,1], [1,2,2,1], 'SAME')
             conv_shape = conv_layer4.get_shape().as_list()
             flat_layer = tf.reshape(conv_layer4, [-1, conv_shape[1]*conv_shape[2]*conv_shape[3]])
-            fc_layer1 = tf.nn.relu(tf.matmul(flat_layer, W_fc1) + b_fc1)
+            fc_layer1 = tf.nn.dropout(tf.nn.relu(tf.matmul(flat_layer, W_fc1) + b_fc1), keep_prob)
             # Create output layers
             digit1 = tf.matmul(fc_layer1, W_digit1) + b_digit1
             digit2 = tf.matmul(fc_layer1, W_digit2) + b_digit2
@@ -124,10 +124,10 @@ if __name__ == '__main__':
 
         training_outputs = create_model(X, 0.5)
         training_loss = tf.add_n([tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(training_outputs[i], y_digits[:,i])) for i in range(len(training_outputs))])
-        global_step = tf.Variable(0)
-        learning_rate = tf.train.exponential_decay(0.025, global_step, 20000, 0.95)
-        optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(training_loss, global_step=global_step)
-        # optimizer = tf.train.AdamOptimizer(0.01).minimize(training_loss)
+        # global_step = tf.Variable(0)
+        # learning_rate = tf.train.exponential_decay(0.25, global_step, 20000, 0.9995)
+        # optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(training_loss, global_step=global_step)
+        optimizer = tf.train.AdadeltaOptimizer(0.025).minimize(training_loss)
 
         # For doing training predictions, create a model without any dropout.
         training_prediction_outputs = create_model(X, 1.0)

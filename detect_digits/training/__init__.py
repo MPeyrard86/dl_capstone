@@ -10,8 +10,6 @@ CSVFILE = "digitStruct.csv"
 CHECKPOINT_FILE = "svhn_model.ckpt"
 TRAINING_STATS_FILE = "svhn_training_stats.csv"
 
-# The percentage of imported data to use for training. The remaining is for validation.
-TRAINING_RATIO = 0.9
 # The number of epoch group runs without improvement before we decide to terminate.
 END_EARLY_THRESHOLD = 500
 # Number of epochs to accumulate before we re-evaluate.
