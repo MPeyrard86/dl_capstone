@@ -2,8 +2,6 @@
 A tool used to train the convolutional neural network for my Udacity Machine Learning Nanodegree Capstone Project.
 """
 
-from __future__ import print_function
-
 import argparse
 import datetime
 import sys
@@ -12,7 +10,6 @@ import time
 import numpy as np
 
 from detect_digits.model import *
-from detect_digits.training import *
 from detect_digits.training.loading import *
 
 USAGE_MESSAGE = """Usage: python convnet_trainer.py <input-data-folders>
@@ -42,28 +39,34 @@ def calculate_accuracy(y_pred, y_labels):
     num_correct_predictions = np.sum([np.array_equal(x,y) for x,y in zip(predicted_labels, y_labels)])
     return float(num_correct_predictions)/y_labels.shape[0]
 
+def create_output_folder(output_dir_base):
+    training_run_folder = os.path.join(args.training_output, datetime.datetime.now().strftime('%Y%m%d-%H%M'))
+    os.makedirs(training_run_folder)
+    return training_run_folder
+
 if __name__ == '__main__':
     # Parse command line parameters
     parser = argparse.ArgumentParser(description="Performs training for a digit detector for the Stree-View House Numbers identification task.")
     parser.add_argument("-t", "--training-folders", required=True, nargs="+")
-    parser.add_argument("-o", "--training-output", required=True)
+    parser.add_argument("-o", "--training-output", required=False)
     parser.add_argument("-b", "--batch-size", required=False, type=int, default=512)
-    parser.add_argument("-v", "--validation-size", required=False, type=int, default=10000)
+    parser.add_argument("-v", "--validation-size", required=False, type=int, default=5000)
+    parser.add_argument("-r", "--resume-from", required=False)
     args = parser.parse_args()
 
-    if not os.path.isdir(args.training_output):
+    if args.training_output is not None and not os.path.isdir(args.training_output):
         os.makedirs(args.training_output)
 
     # Load training data pointed to by command line parameters
-    print("Loading training data from sources: %s"%args.training_folders)
-    print("This may take a few minutes depending on how much data you loaded and how many CPU cores you have.")
+    print "Loading training data from sources: %s"%args.training_folders
+    print "This may take a few minutes depending on how much data you loaded and how many CPU cores you have."
     train_time_start = time.time()
     training_data = load_training_data(args.training_folders)
     train_data = training_data[args.validation_size:]
     validation_data = training_data[:args.validation_size]
     v_images, v_digits = reformat_validation(validation_data)
     train_time_end = time.time()
-    print("Loaded %d training samples in %fs."%(len(training_data), train_time_end - train_time_start))
+    print "Loaded %d training samples in %fs."%(len(training_data), train_time_end - train_time_start)
 
     svhn_training_graph = tf.Graph()
     with svhn_training_graph.as_default():
@@ -127,7 +130,7 @@ if __name__ == '__main__':
         # global_step = tf.Variable(0)
         # learning_rate = tf.train.exponential_decay(0.25, global_step, 20000, 0.9995)
         # optimizer = tf.train.AdadeltaOptimizer(learning_rate).minimize(training_loss, global_step=global_step)
-        optimizer = tf.train.AdadeltaOptimizer(0.025).minimize(training_loss)
+        optimizer = tf.train.AdadeltaOptimizer(0.01).minimize(training_loss)
 
         # For doing training predictions, create a model without any dropout.
         training_prediction_outputs = create_model(X, 1.0)
@@ -135,25 +138,58 @@ if __name__ == '__main__':
         validation_model = create_model(X_validation, 1.0)
         validation_prediction = tf.pack([tf.nn.softmax(validation_model[i]) for i in range(len(validation_model))])
 
-    training_stats_filename = os.path.join(args.training_output,  datetime.datetime.now().strftime('%Y-%m-%d-%H-%M.csv'))
-    with open(training_stats_filename, 'w') as training_stats_file:
-        training_stats_file.write("epoch,train_loss,train_acc,validation_acc")
-        with tf.Session(graph=svhn_training_graph) as session:
-            tf.initialize_all_variables().run()
-            for epoch in xrange(1, 10000000+1):
-                training_batch = sample_training(train_data, args.batch_size)
-                # validation_batch = sample_training(validation_data, args.batch_size)
-                train_feed_dict = {X: training_batch[0], y_digits: training_batch[2]}
-                # validation_feed_dict = {X: validation_batch[0]}
-                _, l, train_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
-                # validation_pred = session.run([training_prediction], validation_feed_dict)
-                if epoch%100 == 0:
-                    tacc = 100.0*calculate_accuracy(train_pred, training_batch[2])
-                    vacc = 100.0*calculate_accuracy(validation_prediction.eval(), v_digits)
-                    training_stats_file.write("%d,%f,%f,%f\n"%(epoch, l, tacc, vacc))
-                    training_stats_file.flush()
+    if args.resume_from is None:
+        training_stats_folder = create_output_folder(args.training_output)
+        training_stats_filename = os.path.join(training_stats_folder, 'training_stats.csv')
+        checkpoint_filename = os.path.join(training_stats_folder, 'model_checkpoint.chk')
+        with open(training_stats_filename, 'w') as training_stats_file:
+            training_stats_file.write("epoch,train_loss,train_acc,validation_acc")
+            with tf.Session(graph=svhn_training_graph) as session:
+                checkpoint_saver = tf.train.Saver()
+                tf.initialize_all_variables().run()
+                best_validation_accuracy = float(0)
+                for epoch in xrange(1, 10000000+1):
+                    training_batch = sample_training(train_data, args.batch_size)
+                    train_feed_dict = {X: training_batch[0], y_digits: training_batch[2]}
+                    _, l, train_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
+                    if epoch%100 == 0:
+                        tacc = 100.0*calculate_accuracy(train_pred, training_batch[2])
+                        vacc = 100.0*calculate_accuracy(validation_prediction.eval(), v_digits)
+                        training_stats_file.write("%d,%f,%f,%f\n"%(epoch, l, tacc, vacc))
+                        training_stats_file.flush()
 
-                    print("training loss at step %d: %f"%(epoch, l))
-                    print("training accuracy: %f%%"%(tacc))
-                    print("validation accuracy: %f%%"%(vacc))
-                    print()
+                        print "training loss at step %d: %f"%(epoch, l)
+                        print "training accuracy: %f%%"%(tacc)
+                        print "validation accuracy: %f%%"%(vacc)
+                        if vacc > best_validation_accuracy:
+                            best_validation_accuracy = vacc
+                            print "Best validation accuracy seen so far. Checkpointing..."
+                            checkpoint_saver.save(session, checkpoint_filename)
+                        print
+    else:
+        training_stats_folder = args.resume_from
+        training_stats_filename = os.path.join(training_stats_folder, 'training_stats.csv')
+        checkpoint_filename = os.path.join(training_stats_folder, 'model_checkpoint.chk')
+        with open(training_stats_filename, 'a') as training_stats_file:
+            with tf.Session(graph=svhn_training_graph) as session:
+                checkpoint_saver = tf.train.Saver()
+                checkpoint_saver.restore(session, checkpoint_filename)
+                best_validation_accuracy = float(0)
+                for epoch in xrange(1, 10000000 + 1):
+                    training_batch = sample_training(train_data, args.batch_size)
+                    train_feed_dict = {X: training_batch[0], y_digits: training_batch[2]}
+                    _, l, train_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
+                    if epoch % 100 == 0:
+                        tacc = 100.0 * calculate_accuracy(train_pred, training_batch[2])
+                        vacc = 100.0 * calculate_accuracy(validation_prediction.eval(), v_digits)
+                        training_stats_file.write("%d,%f,%f,%f\n" % (epoch, l, tacc, vacc))
+                        training_stats_file.flush()
+
+                        print "training loss at step %d: %f" % (epoch, l)
+                        print "training accuracy: %f%%" % (tacc)
+                        print "validation accuracy: %f%%" % (vacc)
+                        if vacc > best_validation_accuracy:
+                            best_validation_accuracy = vacc
+                            print "Best validation accuracy seen so far. Checkpointing..."
+                            checkpoint_saver.save(session, checkpoint_filename)
+                        print
