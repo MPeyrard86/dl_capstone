@@ -11,6 +11,8 @@ from functools import partial
 import scipy as sp
 import scipy.misc
 
+import numpy as np
+
 from detect_digits import *
 from detect_digits.training import CSVFILE
 
