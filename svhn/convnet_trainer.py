@@ -36,18 +36,13 @@ def sample_training(training_source, num_samples):
     sampled_digits = np.asarray([x[1] for x in sample]).reshape((num_samples, MAX_DIGITS))
     return sampled_images, sampled_digits
 
-def reformat_validation(vdata):
-    vimages = np.asarray([x[0] for x in vdata])
-    vdigits = np.asarray([x[2] for x in vdata])
-    return vimages, vdigits
-
 def calculate_accuracy(y_pred, y_labels):
     predicted_labels = np.argmax(y_pred, 2).transpose()
     num_correct_predictions = np.sum([np.array_equal(x,y) for x,y in zip(predicted_labels, y_labels)])
     return float(num_correct_predictions)/y_labels.shape[0]
 
 def create_output_folder(output_dir_base):
-    training_run_folder = os.path.join(args.training_output, datetime.datetime.now().strftime('%Y%m%d-%H%M'))
+    training_run_folder = os.path.join(output_dir_base, datetime.datetime.now().strftime('%Y%m%d-%H%M'))
     os.makedirs(training_run_folder)
     return training_run_folder
 
@@ -117,30 +112,26 @@ if __name__ == '__main__':
     print "This may take a few minutes depending on how much data you loaded and how many CPU cores you have."
     train_time_start = time.time()
     training_data = load_training_data(args.training_folders)
-    # train_data = training_data[args.validation_size:]
 
-    tr_images = np.asarray([x[0] for x in training_data], dtype=np.float32)
-    tr_labels = np.asarray([x[2] for x in training_data], dtype=np.float32)
-    #
-    validation_data = training_data[:args.validation_size]
-    # v_images, v_digits = reformat_validation(validation_data)
+    images = np.asarray([x[0] for x in training_data], dtype=np.float32)
+    labels = np.asarray([x[2] for x in training_data], dtype=np.float32)
 
-    t_images = tr_images[args.validation_size:]
-    t_mean = np.mean(t_images)
-    t_images -= t_mean
-    t_labels = tr_labels[args.validation_size:]
-    t = zip(t_images, t_labels)
-    v_images = tr_images[:args.validation_size]
-    v_images -= t_mean
-    v_digits = tr_labels[:args.validation_size]
-    v = zip(v_images, v_digits)
+    training_images = images[args.validation_size:]
+    training_images_mean = np.mean(training_images)
+    training_images -= training_images_mean
+    training_labels = labels[args.validation_size:]
+    training_set = zip(training_images, training_labels)
+    validation_images = images[:args.validation_size]
+    validation_images -= training_images_mean
+    validation_labels = labels[:args.validation_size]
+    validation_set = zip(validation_images, validation_labels)
     train_time_end = time.time()
-    print "Loaded %d training samples in %fs."%(len(training_data), train_time_end - train_time_start)
+    print "Loaded %d training samples in %.2fs."%(len(training_data), train_time_end - train_time_start)
 
     svhn_training_graph = tf.Graph()
     with svhn_training_graph.as_default():
-        X = tf.placeholder(tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE, IMAGE_COLOR_CHANNELS), name="X")
-        X_validation = tf.constant(v_images, dtype=tf.float32)
+        X_train = tf.placeholder(tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE, IMAGE_COLOR_CHANNELS), name="X_train")
+        X_validation = tf.constant(validation_images, dtype=tf.float32)
         y_digits = tf.placeholder(tf.int32, shape=(None, MAX_DIGITS))
 
         # Create convnet weights and biases
@@ -152,18 +143,13 @@ if __name__ == '__main__':
         b_conv3 = tf.Variable(tf.zeros([CONV3_DEPTH]), name="b_conv3")
         W_conv4 = tf.get_variable("W_conv4", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV3_DEPTH, CONV4_DEPTH], initializer=tf.contrib.layers.xavier_initializer_conv2d())
         b_conv4 = tf.Variable(tf.zeros([CONV4_DEPTH]), name="b_conv4")
-        W_conv5 = tf.get_variable("W_conv5",
-                                  shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV4_DEPTH, CONV5_DEPTH],
-                                  initializer=tf.contrib.layers.xavier_initializer_conv2d())
+        W_conv5 = tf.get_variable("W_conv5", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV4_DEPTH, CONV5_DEPTH], initializer=tf.contrib.layers.xavier_initializer_conv2d())
         b_conv5 = tf.Variable(tf.zeros([CONV5_DEPTH]), name="b_conv1")
-        W_conv6 = tf.get_variable("W_conv6", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV5_DEPTH, CONV6_DEPTH],
-                                  initializer=tf.contrib.layers.xavier_initializer_conv2d())
+        W_conv6 = tf.get_variable("W_conv6", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV5_DEPTH, CONV6_DEPTH], initializer=tf.contrib.layers.xavier_initializer_conv2d())
         b_conv6 = tf.Variable(tf.zeros([CONV6_DEPTH]), name="b_conv2")
-        W_conv7 = tf.get_variable("W_conv7", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV6_DEPTH, CONV7_DEPTH],
-                                  initializer=tf.contrib.layers.xavier_initializer_conv2d())
+        W_conv7 = tf.get_variable("W_conv7", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV6_DEPTH, CONV7_DEPTH], initializer=tf.contrib.layers.xavier_initializer_conv2d())
         b_conv7 = tf.Variable(tf.zeros([CONV7_DEPTH]), name="b_conv3")
-        W_conv8 = tf.get_variable("W_conv8", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV7_DEPTH, CONV8_DEPTH],
-                                  initializer=tf.contrib.layers.xavier_initializer_conv2d())
+        W_conv8 = tf.get_variable("W_conv8", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV7_DEPTH, CONV8_DEPTH], initializer=tf.contrib.layers.xavier_initializer_conv2d())
         b_conv8 = tf.Variable(tf.zeros([CONV8_DEPTH]), name="b_conv4")
         W_fc1 = tf.get_variable("W_fc1", shape=[((IMAGE_SIZE/4.0)**2)*CONV8_DEPTH, FC1_LENGTH], initializer=tf.contrib.layers.xavier_initializer())
         b_fc1 = tf.Variable(tf.zeros([FC1_LENGTH]), name="b_fc1")
@@ -222,15 +208,14 @@ if __name__ == '__main__':
             digit5 = tf.matmul(fc_layer2, W_digit5) + b_digit5
             return digit1, digit2, digit3, digit4, digit5
 
-        training_outputs = create_model(X, 0.5)
+        training_outputs = create_model(X_train, DROPOUT_KEEP_PROB)
         training_loss = tf.add_n([tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(training_outputs[i], y_digits[:,i])) for i in range(len(training_outputs))])
         global_step = tf.Variable(0)
-        learning_rate = tf.train.exponential_decay(0.025, global_step, 30000, 0.99995)
+        learning_rate = tf.train.exponential_decay(INITIAL_LEARNING_RATE, global_step, DECAY_EPOCHS, DECAY_RATE)
         optimizer = tf.train.AdagradOptimizer(learning_rate).minimize(training_loss, global_step=global_step)
-        # optimizer = tf.train.AdadeltaOptimizer(0.025).minimize(training_loss)
 
         # For doing training predictions, create a model without any dropout.
-        training_prediction_outputs = create_model(X, 1.0)
+        training_prediction_outputs = create_model(X_train, 1.0)
         training_prediction = tf.pack([tf.nn.softmax(training_prediction_outputs[i]) for i in range(len(training_prediction_outputs))])
         validation_model = create_model(X_validation, 1.0)
         validation_prediction = tf.pack([tf.nn.softmax(validation_model[i]) for i in range(len(validation_model))])
@@ -245,13 +230,13 @@ if __name__ == '__main__':
                 checkpoint_saver = tf.train.Saver()
                 tf.initialize_all_variables().run()
                 best_validation_accuracy = float(0)
-                for epoch in xrange(1, 10000000+1):
-                    training_batch = sample_training(t, args.batch_size)
-                    train_feed_dict = {X: training_batch[0], y_digits: training_batch[1]}
+                for epoch in xrange(1, MAX_EPOCHS+1):
+                    training_batch = sample_training(training_set, args.batch_size)
+                    train_feed_dict = {X_train: training_batch[0], y_digits: training_batch[1]}
                     _, l, train_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
-                    if epoch%100 == 0:
+                    if epoch%EPOCH_GROUP_SIZE == 0:
                         tacc = 100.0*calculate_accuracy(train_pred, training_batch[1])
-                        vacc = 100.0*calculate_accuracy(validation_prediction.eval(), v_digits)
+                        vacc = 100.0*calculate_accuracy(validation_prediction.eval(), validation_labels)
                         training_stats_file.write("%d,%f,%f,%f\n"%(epoch, l, tacc, vacc))
                         training_stats_file.flush()
 
@@ -274,13 +259,13 @@ if __name__ == '__main__':
                 checkpoint_saver = tf.train.Saver()
                 checkpoint_saver.restore(session, checkpoint_filename)
                 best_validation_accuracy = float(0)
-                for epoch in xrange(1, 10000000 + 1):
-                    training_batch = sample_training(t, args.batch_size)
-                    train_feed_dict = {X: training_batch[0], y_digits: training_batch[1]}
+                for epoch in xrange(1, MAX_EPOCHS + 1):
+                    training_batch = sample_training(training_set, args.batch_size)
+                    train_feed_dict = {X_train: training_batch[0], y_digits: training_batch[1]}
                     _, l, train_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
-                    if epoch % 100 == 0:
+                    if epoch % EPOCH_GROUP_SIZE == 0:
                         tacc = 100.0 * calculate_accuracy(train_pred, training_batch[1])
-                        vacc = 100.0 * calculate_accuracy(validation_prediction.eval(), v_digits)
+                        vacc = 100.0 * calculate_accuracy(validation_prediction.eval(), validation_labels)
                         training_stats_file.write("%d,%f,%f,%f\n" % (epoch, l, tacc, vacc))
                         training_stats_file.flush()
 

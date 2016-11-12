@@ -37,14 +37,14 @@ INITIAL_LEARNING_RATE = 3e-2
 FINAL_LEARNING_RATE = 5e-3
 DECAY_EPOCHS = 5e4
 DECAY_RATE = (FINAL_LEARNING_RATE/INITIAL_LEARNING_RATE)**(1.0/DECAY_EPOCHS)
+DROPOUT_KEEP_PROB = 0.5
 
+# Training data loading.
 MATFILE = "digitStruct.mat"
 CSVFILE = "digitStruct.csv"
 CHECKPOINT_FILE = "svhn_model.ckpt"
 TRAINING_STATS_FILE = "svhn_training_stats.csv"
 
-# The number of epoch group runs without improvement before we decide to terminate.
-END_EARLY_THRESHOLD = 500
 # Number of epochs to accumulate before we re-evaluate.
 EPOCH_GROUP_SIZE = 100
 # Maximum number of epochs.
