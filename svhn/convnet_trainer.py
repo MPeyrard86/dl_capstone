@@ -131,7 +131,7 @@ if __name__ == '__main__':
     svhn_training_graph = tf.Graph()
     with svhn_training_graph.as_default():
         X_train = tf.placeholder(tf.float32, shape=(None, IMAGE_SIZE, IMAGE_SIZE, IMAGE_COLOR_CHANNELS), name="X_train")
-        X_validation = tf.constant(validation_images, dtype=tf.float32)
+        X_validation = tf.constant(validation_images, dtype=tf.float32, name="X_validation")
         y_digits = tf.placeholder(tf.int32, shape=(None, MAX_DIGITS))
 
         # Create convnet weights and biases
@@ -144,13 +144,13 @@ if __name__ == '__main__':
         W_conv4 = tf.get_variable("W_conv4", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV3_DEPTH, CONV4_DEPTH], initializer=tf.contrib.layers.xavier_initializer_conv2d())
         b_conv4 = tf.Variable(tf.zeros([CONV4_DEPTH]), name="b_conv4")
         W_conv5 = tf.get_variable("W_conv5", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV4_DEPTH, CONV5_DEPTH], initializer=tf.contrib.layers.xavier_initializer_conv2d())
-        b_conv5 = tf.Variable(tf.zeros([CONV5_DEPTH]), name="b_conv1")
+        b_conv5 = tf.Variable(tf.zeros([CONV5_DEPTH]), name="b_conv5")
         W_conv6 = tf.get_variable("W_conv6", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV5_DEPTH, CONV6_DEPTH], initializer=tf.contrib.layers.xavier_initializer_conv2d())
-        b_conv6 = tf.Variable(tf.zeros([CONV6_DEPTH]), name="b_conv2")
+        b_conv6 = tf.Variable(tf.zeros([CONV6_DEPTH]), name="b_conv6")
         W_conv7 = tf.get_variable("W_conv7", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV6_DEPTH, CONV7_DEPTH], initializer=tf.contrib.layers.xavier_initializer_conv2d())
-        b_conv7 = tf.Variable(tf.zeros([CONV7_DEPTH]), name="b_conv3")
+        b_conv7 = tf.Variable(tf.zeros([CONV7_DEPTH]), name="b_conv7")
         W_conv8 = tf.get_variable("W_conv8", shape=[CONV_KERNEL_SIZE, CONV_KERNEL_SIZE, CONV7_DEPTH, CONV8_DEPTH], initializer=tf.contrib.layers.xavier_initializer_conv2d())
-        b_conv8 = tf.Variable(tf.zeros([CONV8_DEPTH]), name="b_conv4")
+        b_conv8 = tf.Variable(tf.zeros([CONV8_DEPTH]), name="b_conv8")
         W_fc1 = tf.get_variable("W_fc1", shape=[((IMAGE_SIZE/4.0)**2)*CONV8_DEPTH, FC1_LENGTH], initializer=tf.contrib.layers.xavier_initializer())
         b_fc1 = tf.Variable(tf.zeros([FC1_LENGTH]), name="b_fc1")
         W_fc2 = tf.get_variable("W_fc2", shape=[FC1_LENGTH, FC2_LENGTH], initializer=tf.contrib.layers.xavier_initializer())
@@ -208,7 +208,7 @@ if __name__ == '__main__':
             digit5 = tf.matmul(fc_layer2, W_digit5) + b_digit5
             return digit1, digit2, digit3, digit4, digit5
 
-        training_outputs = create_model(X_train, DROPOUT_KEEP_PROB)
+        training_outputs = create_model(X_train, TRAINING_KEEP_PROB)
         training_loss = tf.add_n([tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(training_outputs[i], y_digits[:,i])) for i in range(len(training_outputs))])
         global_step = tf.Variable(0)
         learning_rate = tf.train.exponential_decay(INITIAL_LEARNING_RATE, global_step, DECAY_EPOCHS, DECAY_RATE)
@@ -233,22 +233,22 @@ if __name__ == '__main__':
                 for epoch in xrange(1, MAX_EPOCHS+1):
                     training_batch = sample_training(training_set, args.batch_size)
                     train_feed_dict = {X_train: training_batch[0], y_digits: training_batch[1]}
-                    _, l, train_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
+                    _, t_loss, t_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
                     if epoch%EPOCH_GROUP_SIZE == 0:
-                        tacc = 100.0*calculate_accuracy(train_pred, training_batch[1])
+                        tacc = 100.0*calculate_accuracy(t_pred, training_batch[1])
                         vacc = 100.0*calculate_accuracy(validation_prediction.eval(), validation_labels)
-                        training_stats_file.write("%d,%f,%f,%f\n"%(epoch, l, tacc, vacc))
+                        training_stats_file.write("%d,%f,%f,%f\n" % (epoch, t_loss, tacc, vacc))
                         training_stats_file.flush()
 
-                        print "training loss at step %d: %f"%(epoch, l)
-                        print "training accuracy: %f%%"%(tacc)
-                        print "validation accuracy: %f%%"%(vacc)
+                        print "training loss at step %d: %.2f"%(epoch, t_loss)
+                        print "training accuracy: %.2f%%"%(tacc)
+                        print "validation accuracy: %.2f%%"%(vacc)
                         if vacc > best_validation_accuracy:
                             best_validation_accuracy = vacc
                             print "Best validation accuracy seen so far. Checkpointing..."
                             checkpoint_saver.save(session, checkpoint_filename, global_step=global_step)
                         else:
-                            print "Best so far is %f"%(best_validation_accuracy)
+                            print "Best so far is %.2f%%"%(best_validation_accuracy)
                         print
     else:
         training_stats_folder = args.resume_from
@@ -262,16 +262,16 @@ if __name__ == '__main__':
                 for epoch in xrange(1, MAX_EPOCHS + 1):
                     training_batch = sample_training(training_set, args.batch_size)
                     train_feed_dict = {X_train: training_batch[0], y_digits: training_batch[1]}
-                    _, l, train_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
+                    _, t_loss, t_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
                     if epoch % EPOCH_GROUP_SIZE == 0:
-                        tacc = 100.0 * calculate_accuracy(train_pred, training_batch[1])
+                        tacc = 100.0 * calculate_accuracy(t_pred, training_batch[1])
                         vacc = 100.0 * calculate_accuracy(validation_prediction.eval(), validation_labels)
-                        training_stats_file.write("%d,%f,%f,%f\n" % (epoch, l, tacc, vacc))
+                        training_stats_file.write("%d,%f,%f,%f\n" % (epoch, t_loss, tacc, vacc))
                         training_stats_file.flush()
 
-                        print "training loss at step %d: %f" % (epoch, l)
-                        print "training accuracy: %f%%" % (tacc)
-                        print "validation accuracy: %f%%" % (vacc)
+                        print "training loss at step %d: %.2f" % (epoch, t_loss)
+                        print "training accuracy: %.2f%%" % (tacc)
+                        print "validation accuracy: %.2f%%" % (vacc)
                         if vacc > best_validation_accuracy:
                             best_validation_accuracy = vacc
                             print "Best validation accuracy seen so far. Checkpointing..."
