@@ -1,0 +1,57 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\title{Detecting House Numbers in Street View Imagery using Convolutional Neural Networks}
+\author{Matthew Peyrard}
+\date{\today}
+\begin{document}
+\maketitle
+
+\section{Definition}
+\subsection{Project Overview}
+This project is my submission for the Capstone Project section for Udacity's Machine Learning Nanodegree program.
+The goal of the project is to automate the task of identifying house numbers from imagery taken from Google's street view cameras.
+
+
+\subsection{Problem Statement}
+The process of \textit{manually} identifying and cataloging such imagery is very expensive due to the scale at which such a process must be applied.
+However, if computational resources could be applied to the task with reasonably high accuracy, then the process could be sped up enormously, in addition to the costs saved from not having to hire thousands of people to perform the task manually.
+The solution was based on the original paper published by Goodfellow et al. \cite{svhn_original_paper}, utilizing deep convolutional neural networks. 
+The standard street view house number dataset \cite{svhn_dataset} was used as a training source for this project.
+
+\subsection{Metrics}
+Performance for this task is measured using an accuracy calculation based on a train/test split. 
+Every 100 iterations of the training algorithm, the test set is fed into the algorithm and we measure the accuracy. 
+No partial credit is provided for the algorithm. 
+A prediction is correct if and only if the entire digit is predicted correctly. 
+Furthermore, since we are using the method described in the original paper \cite{svhn_original_paper}, the predicted length of the digit must also be correct. 
+
+\section{Analysis}
+\subsection{Data Exploration}
+\subsection{Exploratory Visualization}
+\subsection{Algorithms and Techniques}
+\subsection{Benchmark}
+\section{Methodology}
+\subsection{Data Preprocessing}
+\subsection{Implementation}
+\subsection{Refinement}
+\section{Results}
+\subsection{Model Evaluation and Validation}
+\subsection{Justification}
+\section{Conclusion}
+\subsection{Free-Form Visualization}
+\subsection{Reflection}
+\subsection{Improvement}
+
+\begin{thebibliography}{9}
+\bibitem{svhn_dataset} 
+Yuval Netzer, Tao Wang, Adam Coates, Alessandro Bissacco, Bo Wu, Andrew Y. Ng 
+\textit{Reading Digits in Natural Images with Unsupervised Feature Learning NIPS Workshop on Deep Learning and Unsupervised Feature Learning 2011.}
+http://ufldl.stanford.edu/housenumbers/
+\bibitem{svhn_original_paper}
+Goodfellow, Ian J.; Bulatov, Yaroslav; Ibarz, Julian; Arnoud, Sacha; Shet, Vinay
+\textit{Multi-digit Number Recognition from Street View Imagery using Deep Convolutional Neural Networks}
+
+\end{thebibliography}
+	
+\end{document}
+
