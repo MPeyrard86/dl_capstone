@@ -1,8 +1,13 @@
 \documentclass[12pt]{article}
+\usepackage{amsmath}
 \usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{subfig}
+
 \title{Detecting House Numbers in Street View Imagery using Convolutional Neural Networks}
 \author{Matthew Peyrard}
 \date{\today}
+
 \begin{document}
 \maketitle
 
@@ -27,20 +32,210 @@ Furthermore, since we are using the method described in the original paper \cite
 
 \section{Analysis}
 \subsection{Data Exploration}
+The standard Street View House Number dataset\cite{svhn_dataset} was used for training and validation for this project. 
+This data set comes with three sets of images: training, testing and extra. 
+The training and testing data sets each consists of 33,402 and 13,068 images respectively. 
+The extra dataset consists of over 200,000 images that are considered slightly easier, and are used as additional training and validation data. 
+Each of these datasets also contains a \textit{Matlab} file that provides the labels and bounding boxes for each of the digits in each image.
+For the purpose of this project, the Matlab file was converted into a CSV file that contained the image filename and the digits it contains. 
+The bounding boxes were discarded because predicting the positions of the digits was out of scope for this initial version of the project. 
+Furthermore, the matlab file was also scrapped (a script was written to convert it to CSV) because loading it took an excessive amount of time.
+
+\begin{figure}[!htb]
+\minipage{0.32\textwidth}
+	\includegraphics[width=\linewidth]{1046.png}
+\endminipage\hfill
+\minipage{0.32\textwidth}
+	\includegraphics[width=\linewidth]{10.png}
+\endminipage\hfill
+\minipage{0.32\textwidth}
+	\includegraphics[width=\linewidth]{20.png}
+\endminipage\hfill
+\caption{Examples of SVHN imagery.}
+\label{fig:example_imagery}
+\end{figure}
+
+Figure \ref{fig:example_imagery} demonstrates some examples of the kinds of imagery we are dealing with in the SVHN dataset. 
+As you can see, there is a lot of variability in both the image size and image quality. 
+For example in the center image, we can just barely tell that the first digit is a 1, but it could easily be misconstrued as a 7. 
+However, one advantage that is provided by this data set is that digits, while not necessarily front and center, are at least prominent within the image.
+
+Another potential complication is demonstrated by the left-most image, which shows that not all of the individual digits are lined up nicely.
+Some of them are stacked diagonally or even vertically, and the neural network must be able to figure this out. 
+
 \subsection{Exploratory Visualization}
+The first interesting property about the SVHN data set is the distribution of digit lengths across the different partitions (training, testing and extra).
+Each image has one to five digits in the house number.
+However, as shown in Figures \ref{fig:digit_length_plots} and \ref{fig:digit_length_table}, the digit lengths are not all equally represented by the training data.
+This is likely representative of the relative probability of seeing a house number of each given length, but also raises the potential for the model to learn a bias towards common digit lengths, or against those less common ones.
+As the data shows, digit lengths of two and three are far more common, while five digit house numbers are almost non-existent.
+
+\begin{figure}[!htb]
+\centering
+\subfloat[Training\label{fig:train_digit_length_plot}]{
+	\centering
+	\includegraphics[width=0.45\columnwidth]{train_digit_lengths.png}
+}\hfill
+\subfloat[Testing\label{fig:test_digit_length_plot}]{
+	\centering
+	\includegraphics[width=0.45\columnwidth]{test_digit_lengths.png}
+}\hfill
+\subfloat[Extra\label{fig:extra_digit_length_plot}]{
+	\centering
+	\includegraphics[width=0.45\columnwidth]{extra_digit_lengths.png}
+}\hfill
+\caption{Distributions of digit lengths for each of the training sets.}
+\label{fig:digit_length_plots}
+\end{figure}
+
+\begin{figure}[!htb]
+\begin{center}
+\begin{tabular}{ |c|c|c|c|c|c| }
+\hline
+       & 1       & 2       & 3       & 4       & 5       \\
+\hline
+Train  & 15.25\% & 48.48\% & 25.69\% & 8.86\%  & 1.72\%  \\
+\hline
+Test   & 18.94\% & 56.13\% & 19.56\% & 4.67\%  & 0.70\%  \\
+\hline
+Extra  & 4.52\%  & 31.19\% & 44.36\% & 16.43\% & 3.48\%  \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Ratio of each digit length's presence in its respective data set.}
+\label{fig:digit_length_table}
+\end{figure}
+
+
+
+\begin{figure}[!htb]
+\centering
+\subfloat[Training\label{fig:train_digit_freq_plot}]{
+	\centering
+	\includegraphics[width=0.45\columnwidth]{train_digit_freq.png}
+}\hfill
+\subfloat[Testing\label{fig:test_digit_freq_plot}]{
+	\centering
+	\includegraphics[width=0.45\columnwidth]{test_digit_freq.png}
+}\hfill
+\subfloat[Extra\label{fig:extra_digit_freq_plot}]{
+	\centering
+	\includegraphics[width=0.45\columnwidth]{extra_digit_freq.png}
+}\hfill
+\caption{Distributions of individual digit frequencies for each of the training sets.}
+\label{fig:digit_freq_plots}
+\end{figure}
+
+There is a similar asymmetry with the distribution of the individual digits.
+As demonstrated by Figure \ref{fig:digit_freq_plots}, the digit 1 is by far the most common digit across all data sets.
+Similar to the digit length bias, this asymmetry creates a potential bias towards the digit 1 in the model's predictions.
+Even if there is not a bias, the model may be far more successful in recognizing 1's relative to other digits.
+
 \subsection{Algorithms and Techniques}
+In order to solve this problem, a convolutional neural network has been employed.
+The architecture of the neural network is roughly based on the design outlined in the original paper \cite{svhn_original_paper}.
+The network uses eight convolutional layers, with depths of 48, 64, 128 and 160 for the first four layers, and 192 for the final four layers.
+This is followed by two fully connected layers with 4096 units each.
+The network then splits into six output layers, one which predicts the number of digits in the image, and the other five predict the up-to five digit classes.
+In instances where the length output is less than five, then the outputs of the extra digit classifiers are ignored.
+Each output layer is a fully connected softmax classifier.
+
+Every convolutional layer and pre-output fully connected layer used ReLU\cite{relu} activations followed by dropout\cite{svhn_dropout} and local response normalization\cite{svhn_lrn} layers.
+The convolutional kernel size for all convolutional layers was $5 \times 5$, along with a stride of 1.
+
+Max pooling was used twice, once following convolutional layer 4, and again following convolutional layer 8.
+Both max pooling layers used $2 \times 2$ windows with a stride of 1.
+
 \subsection{Benchmark}
+The performance benchmark that was used to optimize the learning algorithm was the Adagrad optimization algorithm. 
+Adam and Adadelta optimizers were also tested, but Adagrad proved to have the highest accuracy on this task.
+
+Since this is a discrete classification problem with a small number of classes, the cross entropy of the predictions and labels was used as a loss function to be minimized.
+The cross entropy $H$ of two probability distributions $p$ and $q$ is given by:
+
+\begin{equation}
+	H(p,q) = -\sum_{x \in X} p(x) \log q(x)
+\end{equation}
+
+where $X = \{0, 1, ..., 9 \}$, representing the ten distinct digit classes we are identifying.
+Since the cross-entropy relies on $p$ and $q$ to be probability distributions, we must ensure that our predictions and labels also take the form of probability distributions.
+
+This is simple in the case of the training label, as we can simply use a 1-hot encoded vector, meaning that it is a 10-dimensional vector filled with zeros, except for the entry representing the correct label, which holds a 1.
+For example, the following vector would represent a label of 5:
+
+\begin{align}
+	\hat{y} &= \begin{bmatrix}
+		0 \\
+		0 \\
+		0 \\
+		0 \\
+		0 \\
+		1 \\
+		0 \\
+		0 \\
+		0 \\
+		0 \\
+	\end{bmatrix} 
+\end{align}
+
+For the model predictions, the final matrix multiply will also provide a 10-dimensional vector.
+However, those predictions will be a weighted representation of the relative confidence the model has in each possible prediction.
+The problem is that the values of such a vector will not necessarily sum to 1, meaning it is not a valid probability distribution.
+We use a standard normalization technique called \textit{softmax} to ensure the values sum to 1, while preserving the relative weighting.
+Softmax is defined element-wise as:
+
+\begin{equation}
+	S(y)_j = \frac{\exp(y_j)}{\sum_{i=1}^K \exp(y_i)}
+\end{equation}
+
+where in this case $K=10$.
+This means that our loss function for the $i$-th digit is defined as:
+
+\begin{equation}
+	L_i = H(S(y_i), \hat{y}_i)
+\end{equation}
+
+where $y_i$ is the model's prediction vector for the $i$-th digit, and $\hat{y}_i$ is the training label 1-hot vector for the $i$-th digit.
+Finally, we need to unify these losses into a single function that can be used by the optimizer.
+Summing the losses together suffices for this purpose, giving us the final loss function:
+
+\begin{equation}
+	\mathcal{L} = \sum_{i=1}^5 L_i
+\end{equation}
+
 \section{Methodology}
+Work in progress.
+
 \subsection{Data Preprocessing}
+Work in progress.
+
 \subsection{Implementation}
+Work in progress.
+
 \subsection{Refinement}
+Work in progress.
+
 \section{Results}
+Work in progress.
+
 \subsection{Model Evaluation and Validation}
+Work in progress.
+
 \subsection{Justification}
+Work in progress.
+
 \section{Conclusion}
+Work in progress.
+
 \subsection{Free-Form Visualization}
+Work in progress.
+
 \subsection{Reflection}
+Work in progress.
+
 \subsection{Improvement}
+Work in progress.
+
 
 \begin{thebibliography}{9}
 \bibitem{svhn_dataset} 
@@ -50,6 +245,15 @@ http://ufldl.stanford.edu/housenumbers/
 \bibitem{svhn_original_paper}
 Goodfellow, Ian J.; Bulatov, Yaroslav; Ibarz, Julian; Arnoud, Sacha; Shet, Vinay
 \textit{Multi-digit Number Recognition from Street View Imagery using Deep Convolutional Neural Networks}
+\bibitem{svhn_lrn}
+Alex Krizhevsky and Sutskever, Ilya and Geoffrey E. Hinton
+\textit{ImageNet Classification with Deep Convolutional Neural Networks}
+\bibitem{svhn_dropout}
+Nitish Srivastava, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever, Ruslan Salakhutdinov
+\textit{Dropout: A Simple Way to Prevent Neural Networks from Overfitting}
+\bibitem{relu}
+R Hahnloser, R. Sarpeshkar, M A Mahowald, R. J. Douglas, H.S. Seung (2000). 
+\textit{Digital selection and analogue amplification coesist in a cortex-inspired silicon circuit.}
 
 \end{thebibliography}
 	
