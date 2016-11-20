@@ -13,7 +13,7 @@ MAX_DIGITS = 5
 # The digit may be of discrete length 0-5, and we also add another class for 6+.
 NUM_LENGTH_CLASSES = 7
 # Each digit may be 0-9, and we also add another class to represent 'not present'.
-NUM_DIGIT_CLASSES = 10
+NUM_DIGIT_CLASSES = 11
 EMPTY_DIGIT_LABEL = NUM_DIGIT_CLASSES-1
 
 # Convolutional layers hyper-parameters
