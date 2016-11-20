@@ -13,7 +13,7 @@ MAX_DIGITS = 5
 # The digit may be of discrete length 0-5, and we also add another class for 6+.
 NUM_LENGTH_CLASSES = 7
 # Each digit may be 0-9, and we also add another class to represent 'not present'.
-NUM_DIGIT_CLASSES = 11
+NUM_DIGIT_CLASSES = 10
 EMPTY_DIGIT_LABEL = NUM_DIGIT_CLASSES-1
 
 # Convolutional layers hyper-parameters
@@ -33,9 +33,9 @@ FC1_LENGTH = 4096
 FC2_LENGTH = 4096
 
 # Learning Rates
-INITIAL_LEARNING_RATE = 3e-2
-FINAL_LEARNING_RATE = 5e-3
-DECAY_EPOCHS = 5e4
+INITIAL_LEARNING_RATE = 2.5e-2
+FINAL_LEARNING_RATE = 7.5e-3
+DECAY_EPOCHS = 5.0e4
 DECAY_RATE = (FINAL_LEARNING_RATE/INITIAL_LEARNING_RATE)**(1.0/DECAY_EPOCHS)
 TRAINING_KEEP_PROB = 0.5
 
@@ -43,7 +43,7 @@ TRAINING_KEEP_PROB = 0.5
 MATFILE = "digitStruct.mat"
 CSVFILE = "digitStruct.csv"
 CHECKPOINT_FILE = "svhn_model.ckpt"
-TRAINING_STATS_FILE = "svhn_training_stats.csv"
+TRAINING_STATS_FILE = "training_stats.csv"
 
 # Number of epochs to accumulate before we re-evaluate.
 EPOCH_GROUP_SIZE = 100
