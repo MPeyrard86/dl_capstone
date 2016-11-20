@@ -106,8 +106,6 @@ Extra  & 4.52\%  & 31.19\% & 44.36\% & 16.43\% & 3.48\%  \\
 \label{fig:digit_length_table}
 \end{figure}
 
-
-
 \begin{figure}[!htb]
 \centering
 \subfloat[Training\label{fig:train_digit_freq_plot}]{
@@ -133,18 +131,7 @@ Even if there is not a bias, the model may be far more successful in recognizing
 
 \subsection{Algorithms and Techniques}
 In order to solve this problem, a convolutional neural network has been employed.
-The architecture of the neural network is roughly based on the design outlined in the original paper \cite{svhn_original_paper}.
-The network uses eight convolutional layers, with depths of 48, 64, 128 and 160 for the first four layers, and 192 for the final four layers.
-This is followed by two fully connected layers with 4096 units each.
-The network then splits into six output layers, one which predicts the number of digits in the image, and the other five predict the up-to five digit classes.
-In instances where the length output is less than five, then the outputs of the extra digit classifiers are ignored.
-Each output layer is a fully connected softmax classifier.
 
-Every convolutional layer and pre-output fully connected layer used ReLU\cite{relu} activations followed by dropout\cite{svhn_dropout} and local response normalization\cite{svhn_lrn} layers.
-The convolutional kernel size for all convolutional layers was $5 \times 5$, along with a stride of 1.
-
-Max pooling was used twice, once following convolutional layer 4, and again following convolutional layer 8.
-Both max pooling layers used $2 \times 2$ windows with a stride of 1.
 
 \subsection{Benchmark}
 The performance benchmark that was used to optimize the learning algorithm was the Adagrad optimization algorithm. 
@@ -204,16 +191,87 @@ Summing the losses together suffices for this purpose, giving us the final loss 
 \end{equation}
 
 \section{Methodology}
-Work in progress.
-
 \subsection{Data Preprocessing}
-Work in progress.
+Two data pre-processing steps were performed for this project. 
+
+The first step is to simply resize each image to $32 \times 32$. This is because neural networks have rigid input shape requirements. The second pre-processing step is a centering operation performed by subtracting the mean of all the pixels in the training data. 
+
+No measures were taken to adjust to compensate for the over-abundance of 2-digit numbers, or for the execess in numbers containing the digit 1. The assumption is that the network should be large enough to learn the difference between the different digits, regardless of their distribution. It is likely that the network will be better at recognizing 1s than for other digits, but this fact shouldn't hinder its ability to recognize other digits.
 
 \subsection{Implementation}
-Work in progress.
+The architecture of the neural network is roughly based on the design outlined in the original paper \cite{svhn_original_paper}.
+The network uses eight convolutional layers, with depths of 48, 64, 128 and 160 for the first four layers, and 192 for the final four layers.
+This is followed by two fully connected layers with 4096 units each.
+The network then splits into five output layers, each one predicting one of the up-to-five digits in the image. 
+Each output layer is assigned a static index $i$, and that layer is responsible for predicting the $i$-th digit. 
+If the number has fewer digits than $i$, then the output layer will output the null class, which in this case is just the digit 10.
+Each output layer is a fully connected softmax classifier.
+
+Every convolutional layer and pre-output fully connected layer uses ReLU\cite{relu} activations followed by dropout\cite{svhn_dropout} and local response normalization\cite{svhn_lrn} layers.
+The convolutional kernel size for all convolutional layers was $5 \times 5$, along with a stride of 1.
+
+Max pooling was used twice, once following convolutional layer 4, and again following convolutional layer 8.
+Both max pooling layers used $2 \times 2$ windows with a stride of 1.
+
+The Adagrad optimizer was used with an initial learning rate $\alpha_0 = 0.025$, decaying over the course of 50,000 epochs to a final learning rate of 0.0075. 
 
 \subsection{Refinement}
-Work in progress.
+The biggest sources of improvement during this project was the adjustment of the learning rate and increasing the size of the network.
+The network was initially half the size of the final architecture, with four convolutional layers, and one fully connected layer.
+The learning rate was initially set statically to 0.05, which was good enough to get the model off the ground, but it often got stuck at around 40\% accuracy. 
+Such a learning rate was clearly too high to allow the optimizer to find the smaller crevices that lead to higher accuracies. 
+In response to this, some major performance improvements were gained by lowering the learning rate to 0.025 and introducing the exponential decay.
+This allowed the accuracy to increase to 80\%, however once it reached this point, the network would suddenly jump out of its current optimum, and land somewhere completely sub-optimal. 
+This can be seen in Figure \ref{fig:small_network_results}.
+Whether this was a Tensorflow bug, or as a result of a flawed architecture, was not discernable.
+However, by increasing the network size, in addition to the changes in the learning rate, the accuracy (on the validation set) was able to exceed 90\%. 
+
+There were two methods for this, the most successful one which has been outlined in the Implementation section achieved a peak accuracy of 91\%, which is shown in Figure \ref{fig:best_results}.
+The second method was the one outlined in the original paper \cite{svhn_original_paper}, which uses length prediction in place of placeholder digits (for missing digits).
+The best results achieved for this method were 90.1\% accuracy, which is outlined in Figure \ref{fig:length_best_results}.
+
+\begin{figure}[!htb]
+\centering
+\subfloat[Loss\label{fig:best_loss}]{
+	\centering
+	\includegraphics[width=0.45\columnwidth]{length_best_loss.png}
+}\hfill
+\subfloat[Accuracy\label{fig:best_accuracy}]{
+	\centering
+	\includegraphics[width=0.45\columnwidth]{length_best_accuracy.png}
+}\hfill
+\caption{Plot of best run using placeholder digit, $\alpha_0 = 0.025$, 50,000 epoch decay to 0.0075.}
+\label{fig:best_results}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\subfloat[Loss\label{fig:lenth_best_loss}]{
+	\centering
+	\includegraphics[width=0.45\columnwidth]{length_best_loss.png}
+}\hfill
+\subfloat[Accuracy\label{fig:length_best_accuracy}]{
+	\centering
+	\includegraphics[width=0.45\columnwidth]{best_accuracy.png}
+}\hfill
+\caption{Plot of best run using length prediction, $\alpha_0 = 0.025$, 50,000 epoch decay to 0.0075.}
+\label{fig:length_best_results}
+\end{figure}
+
+\begin{figure}[!htb]
+\centering
+\subfloat[Loss\label{fig:small_best_loss}]{
+	\centering
+	\includegraphics[width=0.45\columnwidth]{small_network_loss.png}
+}\hfill
+\subfloat[Accuracy\label{fig:small_best_accuracy}]{
+	\centering
+	\includegraphics[width=0.45\columnwidth]{small_network_accuracy.png}
+}\hfill
+\caption{Plot of run using smaller convolutional network, $\alpha_0 = 0.025$, 30,000 epoch decay to 0.001.}
+\label{fig:small_network_results}
+\end{figure}
+
 
 \section{Results}
 Work in progress.
