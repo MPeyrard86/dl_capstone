@@ -34,8 +34,8 @@ FC2_LENGTH = 4096
 
 # Learning Rates
 INITIAL_LEARNING_RATE = 2.5e-2
-FINAL_LEARNING_RATE = 7.5e-3
-DECAY_EPOCHS = 5.0e4
+FINAL_LEARNING_RATE = 1e-3
+DECAY_EPOCHS = 1e5
 DECAY_RATE = (FINAL_LEARNING_RATE/INITIAL_LEARNING_RATE)**(1.0/DECAY_EPOCHS)
 TRAINING_KEEP_PROB = 0.5
 
@@ -44,6 +44,7 @@ MATFILE = "digitStruct.mat"
 CSVFILE = "digitStruct.csv"
 CHECKPOINT_FILE = "svhn_model.ckpt"
 TRAINING_STATS_FILE = "training_stats.csv"
+TRAINING_IMAGES_MEAN = "training_images_mean"
 
 # Number of epochs to accumulate before we re-evaluate.
 EPOCH_GROUP_SIZE = 100

@@ -220,12 +220,18 @@ if __name__ == '__main__':
         validation_model = create_model(X_validation, 1.0)
         validation_prediction = tf.pack([tf.nn.softmax(validation_model[i]) for i in range(len(validation_model))])
 
+    # Record the training images mean in the output folder so that if we reload the model, we know how to adjust
+    # the input.
+    training_stats_folder = create_output_folder(args.training_output)
+    mean_filename = os.path.join(training_stats_folder, TRAINING_IMAGES_MEAN)
+    with open(mean_filename, 'w') as mean_file:
+        mean_file.write(str(training_images_mean))
+
     if args.resume_from is None:
-        training_stats_folder = create_output_folder(args.training_output)
-        training_stats_filename = os.path.join(training_stats_folder, 'training_stats.csv')
+        training_stats_filename = os.path.join(training_stats_folder, TRAINING_STATS_FILE)
         checkpoint_filename = os.path.join(training_stats_folder, 'model_checkpoint.chk')
         with open(training_stats_filename, 'w') as training_stats_file:
-            training_stats_file.write("epoch,train_loss,train_acc,validation_acc")
+            training_stats_file.write("epoch,train_loss,train_acc,validation_acc\n")
             with tf.Session(graph=svhn_training_graph) as session:
                 checkpoint_saver = tf.train.Saver()
                 tf.initialize_all_variables().run()

@@ -35,16 +35,33 @@ def get_training_sample_bounding_boxes(file, bbox_ref):
 
     assert label_dataset.shape == left_dataset.shape == top_dataset.shape == width_dataset.shape == height_dataset.shape
     num_boxes = label_dataset.shape[0]
-    bboxes = list()
+    labels = list()
+    lefts = list()
+    tops = list()
+    rights = list()
+    bottoms = list()
     for i in xrange(num_boxes):
-        bbox = dict()
-        bbox['label'] = parse_int_dataset(file, label_dataset[i])
-        bbox['left'] = parse_int_dataset(file, left_dataset[i])
-        bbox['top'] = parse_int_dataset(file, top_dataset[i])
-        bbox['width'] = parse_int_dataset(file, width_dataset[i])
-        bbox['height'] = parse_int_dataset(file, height_dataset[i])
-        bboxes.append(bbox)
-    return bboxes
+        label = parse_int_dataset(file, label_dataset[i])
+        left = parse_int_dataset(file, left_dataset[i])
+        top = parse_int_dataset(file, top_dataset[i])
+        width = parse_int_dataset(file, width_dataset[i])
+        height = parse_int_dataset(file, height_dataset[i])
+
+        labels.append(str(label))
+        # bounds.append((left, top, left+width, top-height))
+        lefts.append(left)
+        tops.append(top)
+        rights.append(left+width)
+        bottoms.append(top+height)
+    bbox = {
+        'label': ''.join(labels),
+        'left': min(lefts),
+        'top': max(tops),
+        'right': max(rights),
+        'bottom': min(bottoms)
+    }
+
+    return bbox
 
 
 if __name__ == '__main__':
@@ -78,8 +95,8 @@ if __name__ == '__main__':
 
     output_csvfile = os.path.join(data_folder, CSVFILE)
     with open(output_csvfile, 'w') as output_file:
-        output_file.write('filename,label\n')
-        for filename, bboxes in training_samples:
-            output_file.write('{},{}\n'.format(filename, ''.join([str(b['label']) for b in bboxes])))
+        output_file.write('filename,label,left,top,right,bottom\n')
+        for filename, bb in training_samples:
+            output_file.write('%s,%s,%s,%s,%s,%s\n'%(filename, bb['label'], bb['left'], bb['top'], bb['right'], bb['bottom']))
 
     digit_struct_file.close()
