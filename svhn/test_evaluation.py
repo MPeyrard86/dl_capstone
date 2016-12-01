@@ -10,9 +10,6 @@ import tensorflow as tf
 from svhn import *
 from svhn.data_loader import load_data
 
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-
 def calculate_accuracy(y_pred, y_labels):
     predicted_labels = [x.flatten() for x in np.argmax(y_pred, 3).transpose()]
     num_correct_predictions = np.sum([np.array_equal(x,y) for x,y in zip(predicted_labels, y_labels)])
@@ -152,7 +149,7 @@ if __name__ == '__main__':
     training_prediction_outputs = create_model(X, 1.0)
     training_prediction = tf.pack(
         [tf.nn.softmax(training_prediction_outputs[i]) for i in range(len(training_prediction_outputs))])
-    checkpoint_filename = os.path.join(args.model_folder, 'model_checkpoint.chk-222300')
+    checkpoint_filename = os.path.join(args.model_folder, 'model_checkpoint.chk-149900')
     with tf.Session(graph=svhn_training_graph) as session:
         checkpoint_saver = tf.train.Saver()
         checkpoint_saver.restore(session, checkpoint_filename)

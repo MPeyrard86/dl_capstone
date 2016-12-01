@@ -17,19 +17,30 @@ def process_sample(folder, training_sample_line):
     :param training_sample_line: A single line from the training CSV descriptor.
     :return: A training sample tuple (training_image, length_class, digit_classes)
     """
-    split_line = training_sample_line.split(',')
-    assert len(split_line) == 2
+    split_line = training_sample_line.strip().split(',')
+    assert len(split_line) == 6
     training_image_path = os.path.join(folder, split_line[0])
-    training_image_label = split_line[1].strip()
+    training_image_label = split_line[1]
     assert os.path.exists(training_image_path)
     training_image = sp.misc.imread(training_image_path)
+    left = int(split_line[2])
+    top = int(split_line[3])
+    right = int(split_line[4])
+    bottom = int(split_line[5])
+
+    height = bottom - top
+    delta_height = 0.5 * (1.15 * height - height)
+    top = int(max(top - delta_height, 0))
+    bottom = int(max(bottom + delta_height, training_image.shape[0]))
+    training_image = training_image[top:bottom, left:right]
+
     training_image = sp.misc.imresize(training_image, (IMAGE_SIZE, IMAGE_SIZE))
     length_class = min(len(training_image_label), NUM_LENGTH_CLASSES - 1)
     # Populate the digit classifications
     digit_classes = [int(x) for x in training_image_label]
     # Pad the ending of the digit with the empty label
-    for _ in range(MAX_DIGITS-len(training_image_label)):
-        digit_classes.append(NUM_DIGIT_CLASSES-1)
+    for _ in range(MAX_DIGITS - len(training_image_label)):
+        digit_classes.append(NUM_DIGIT_CLASSES - 1)
     return training_image, length_class, digit_classes
 
 def load_data(training_folders):

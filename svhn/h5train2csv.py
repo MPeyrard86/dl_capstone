@@ -55,10 +55,10 @@ def get_training_sample_bounding_boxes(file, bbox_ref):
         bottoms.append(top+height)
     bbox = {
         'label': ''.join(labels),
-        'left': min(lefts),
-        'top': max(tops),
-        'right': max(rights),
-        'bottom': min(bottoms)
+        'left': max(min(lefts), 0),
+        'top': max(min(tops), 0),
+        'right': max(max(rights), 0),
+        'bottom': max(max(bottoms), 0)
     }
 
     return bbox
