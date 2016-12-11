@@ -50,3 +50,6 @@ TRAINING_IMAGES_MEAN = "training_images_mean"
 EPOCH_GROUP_SIZE = 100
 # Maximum number of epochs.
 MAX_EPOCHS = 1000000
+
+IMAGE_FORMATS = (".png", ".jpg")
+BATCH_OUTPUT_FILE = "predictions.csv"

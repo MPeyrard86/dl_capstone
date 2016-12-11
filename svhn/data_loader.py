@@ -9,7 +9,8 @@ import scipy.misc
 
 import itertools
 
-from svhn import CSVFILE, MAX_DIGITS, IMAGE_SIZE, NUM_LENGTH_CLASSES, NUM_DIGIT_CLASSES
+from svhn import CSVFILE, MAX_DIGITS, IMAGE_SIZE, NUM_LENGTH_CLASSES, NUM_DIGIT_CLASSES, IMAGE_FORMATS
+
 
 def process_sample(folder, training_sample_line):
     """
@@ -42,6 +43,19 @@ def process_sample(folder, training_sample_line):
     for _ in range(MAX_DIGITS - len(training_image_label)):
         digit_classes.append(NUM_DIGIT_CLASSES - 1)
     return training_image, length_class, digit_classes
+
+def process_image(image_file):
+    return sp.misc.imresize(sp.misc.imread(image_file), (IMAGE_SIZE, IMAGE_SIZE))
+
+def load_image_data(images_folder):
+    image_files = filter(lambda x: any(x.endswith(y) for y in IMAGE_FORMATS), os.listdir(images_folder))
+    image_files = [os.path.join(images_folder, f) for f in image_files]
+    thread_pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())
+    try:
+        return image_files, thread_pool.map(process_image, image_files)
+    finally:
+        thread_pool.close()
+
 
 def load_data(training_folders):
     """
