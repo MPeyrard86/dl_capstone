@@ -9,12 +9,25 @@ import sys
 from svhn import CSVFILE, MATFILE
 
 def display_usage():
+    """
+    Displays the usage message.
+    """
     print("Usage: python h5train2csv.py <data-folder>")
 
 def parse_str_obj(str_obj):
+    """
+    Extracts the characters from the string object and concatenates them into an actual string.
+    :param str_obj: The string object.
+    """
     return ''.join(chr(x) for x in str_obj)
 
 def parse_int_dataset(file, int_dataset):
+    """
+    Parses an integer from the provided data set.
+    :param file: The hd5 file.
+    :param int_dataset: The data set containing the integer.
+    :return: The parsed integer.
+    """
     int_ref = int_dataset[0]
     if isinstance(int_ref, h5py.Reference):
         int_obj = file[int_ref]
@@ -22,10 +35,16 @@ def parse_int_dataset(file, int_dataset):
     return int(int_ref)
 
 def get_training_sample_filename(file, name_ref):
+    """
+    Extracts the training sample filename from the name reference.
+    """
     filename_obj = file[name_ref]
     return parse_str_obj(filename_obj)
 
 def get_training_sample_bounding_boxes(file, bbox_ref):
+    """
+    Extracts the bounding boxes from the object.
+    """
     bounding_box_obj = file[bbox_ref]
     label_dataset = bounding_box_obj['label']
     left_dataset = bounding_box_obj['left']

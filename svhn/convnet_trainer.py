@@ -8,7 +8,6 @@ import itertools
 import multiprocessing
 import os
 import random
-import sys
 import time
 from functools import partial
 
@@ -20,34 +19,47 @@ import tensorflow as tf
 from svhn import *
 from svhn.data_loader import get_model_file
 
-USAGE_MESSAGE = """Usage: python convnet_trainer.py <input-data-folders>
-This script expects a set of training folders as parameters.
-These folders are expected to contain the set of training images and a file called '%s'.
-If your training folder does not contain such a file, then see the documentation for the h5train2csv tool to generate it."""%(CSVFILE)
-
-def get_training_folder_names():
-    if len(sys.argv) < 2:
-        raise RuntimeError('Missing list of training folders.')
-    return sys.argv[1:]
-
-def sample_training(training_source, num_samples):
-    sample = random.sample(training_source, num_samples)
+def sample_data(data, num_samples):
+    """
+    Acquires a random sample of data points from the given data set.
+    :param data: The set of data to sample from.
+    :param num_samples: The number of data points to sample.
+    :return: A list of sampled data points.
+    """
+    sample = random.sample(data, num_samples)
     sampled_images = np.asarray([x[0] for x in sample])
-    # sampled_lengths = np.asarray([x[1] for x in sample])
     sampled_digits = np.asarray([x[1] for x in sample]).reshape((num_samples, MAX_DIGITS))
     return sampled_images, sampled_digits
 
-def calculate_accuracy(y_pred, y_labels):
-    predicted_labels = np.argmax(y_pred, 2).transpose()
-    num_correct_predictions = np.sum([np.array_equal(x,y) for x,y in zip(predicted_labels, y_labels)])
-    return float(num_correct_predictions)/y_labels.shape[0]
+def calculate_accuracy(predictions, correct_labels):
+    """
+    Calculates the accuracy of the given predictions by comparing them to the provided labels.
+    The accuracy is calculated simply as the ratio of matching predictions to the total number of samples provided.
+    :param predictions: The model's predictions.
+    :param correct_labels: The correct labels from the data.
+    :return: The ratio of matching predictions to the total number of samples provided.
+    """
+    predicted_labels = np.argmax(predictions, 2).transpose()
+    num_correct_predictions = np.sum([np.array_equal(x,y) for x,y in zip(predicted_labels, correct_labels)])
+    return float(num_correct_predictions) / correct_labels.shape[0]
 
 def create_output_folder(output_dir_base):
+    """
+    Creates the model output folder. The output folder's name is based on the current date and time.
+    :param output_dir_base: The base folder.
+    :return: The full output folder location.
+    """
     training_run_folder = os.path.join(output_dir_base, datetime.datetime.now().strftime('%Y%m%d-%H%M'))
     os.makedirs(training_run_folder)
     return training_run_folder
 
 def validate_training_folders(training_folders):
+    """
+    Verifies that the provided training folders exist and contain a CSV file.
+    If the conditions fail then a runtime exception is thrown.
+    :param training_folders: The set of provided trianing folders.
+    :return: Nothing.
+    """
     for training_folder in training_folders:
         if not os.path.isdir(training_folder):
             raise RuntimeError("The provided training folder '%s' does not exist."%(training_folder))
@@ -248,7 +260,7 @@ if __name__ == '__main__':
             tf.initialize_all_variables().run()
             best_validation_accuracy = float(0)
             for epoch in xrange(1, MAX_EPOCHS+1):
-                training_batch = sample_training(training_set, args.batch_size)
+                training_batch = sample_data(training_set, args.batch_size)
                 train_feed_dict = {X_train: training_batch[0], y_digits: training_batch[1]}
                 _, t_loss, t_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
                 if epoch%EPOCH_GROUP_SIZE == 0:

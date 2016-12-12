@@ -11,6 +11,13 @@ from svhn import *
 from svhn.data_loader import load_data, get_model_file
 
 def calculate_accuracy(y_pred, y_labels):
+    """
+    Calculates the accuracy of the given predictions by comparing them to the provided labels.
+    The accuracy is calculated simply as the ratio of matching predictions to the total number of samples provided.
+    :param predictions: The model's predictions.
+    :param correct_labels: The correct labels from the data.
+    :return: The ratio of matching predictions to the total number of samples provided.
+    """
     predicted_labels = [x.flatten() for x in np.argmax(y_pred, 3).transpose()]
     num_correct_predictions = np.sum([np.array_equal(x,y) for x,y in zip(predicted_labels, y_labels)])
     return num_correct_predictions

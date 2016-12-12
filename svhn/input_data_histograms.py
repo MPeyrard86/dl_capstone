@@ -25,18 +25,17 @@ def get_digit_lengths(training_filename):
                 digit_lengths.append(label_len)
     return digit_lengths
 
-def get_digit_frequencies(training_filename):
+def get_digits(training_filename):
     """
-
-    :param training_filename:
-    :return:
+    Extracts each individual digit from each data entry.
+    :param training_filename: The CSV file containing the digit labels.
     """
     digits = list()
     with open(training_filename, 'r') as training_file:
         for sample in itertools.islice(training_file, 1, None):
             split_line = sample.split(',')
-            assert len(split_line) == 2
             training_image_label = split_line[1].strip()
+            # Ignore digits over length 5.
             if len(training_image_label) <= 5:
                 for d in training_image_label:
                     digits.append(int(d))
@@ -72,17 +71,10 @@ if __name__ == '__main__':
     ax.set_ylabel("Frequency")
     plt.show()
 
-    _digits = get_digit_frequencies(tfilename)
+    _digits = get_digits(tfilename)
     fig, ax = plt.subplots()
     ax.bar(range(10), np.bincount(_digits), align='center')
     ax.set(xticks=range(10))
     ax.set_xlabel("Digits")
     ax.set_ylabel("Frequency")
     plt.show()
-
-    # plt.hist(lbuckets, bins=5, align='center')
-    # plt.title("Digit Length Histogram")
-    # plt.xlabel("Digit Length")
-    # plt.ylabel("Frequency")
-    # plt.xticks([1,2,3,4,5])
-    # plt.show()
