@@ -29,5 +29,16 @@ This script is used to convert the h5 file to a CSV format. It is a very simple 
 
 `python h5train2csv /home/matt/Downloads/extra`
 
+The convnet\_trainer does not accept the h5 file, therefore running this script on the SVHN training data prior to training is _mandatory_. As previously stated, the uploaded data is already converted to CSV.
 
+## test\_evaluation
+This script was written to load a model and a labelled data set and evaluate its performance/accuracy. It requires two parameters:
+
+-m Model folder location. This corresponds to the output (-o option) from the convnet\_trainer program. This is the model that will be loaded and evaluated.
+
+-d Data folder. The labelled data to evaluate the model against.
+
+Example:
+
+`python test_evaluation.py -m /mnt/storage/capstone_stats/20161128-2101 -d /home/matt/Downloads/test`
 
