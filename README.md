@@ -42,3 +42,15 @@ Example:
 
 `python test_evaluation.py -m /mnt/storage/capstone_stats/20161128-2101 -d /home/matt/Downloads/test`
 
+## batch\_classify
+This script was written to evaluate images that are not part of a labelled training/validation/testing set. It is the script that would be used in production. It takes in a batch of images and produces a CSV file containing the predictions for those images. It requires the following parameters:
+
+-m Model folder location. This corresponds to the output (-o option) from the convnet\_trainer program. This is the model that will be loaded and used to make predictions.
+
+-d Data folder. This folder should contain a set of images to evaluate.
+
+-o Output folder. A file called predictions.csv will be written to this folder containing the predictions from the model for the given images in the data folder. 
+
+Example:
+
+`python batch_classify.py -m /mnt/storage/capstone_stats/20161128-2101 -d /home/matt/Downloads/custom -o /home/matt/Downloads/custom`
