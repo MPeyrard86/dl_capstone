@@ -1,16 +1,12 @@
+import itertools
 import multiprocessing
 import os
-import random
 from functools import partial
 
-import numpy as np
 import scipy as sp
 import scipy.misc
 
-import itertools
-
 from svhn import CSVFILE, MAX_DIGITS, IMAGE_SIZE, NUM_LENGTH_CLASSES, NUM_DIGIT_CLASSES, IMAGE_FORMATS
-
 
 def process_sample(folder, training_sample_line):
     """
@@ -56,7 +52,6 @@ def load_image_data(images_folder):
     finally:
         thread_pool.close()
 
-
 def load_data(training_folders):
     """
     Load the training data. Utilizes all available CPU cores to speed up the process.
@@ -73,5 +68,15 @@ def load_data(training_folders):
     thread_pool.close()
     flattend_training_data = filter(lambda y: len(y[2]) <= MAX_DIGITS, [training_sample for training_sublist in training_data_master for training_sample in training_sublist])
     del training_data
-    # random.shuffle(flattend_training_data)
     return flattend_training_data
+
+def get_model_file(model_folder):
+    """
+    Finds the most advanced model checkpoint from the given folder.
+    The most advanced model is determined by the highest iteration count in the filename.
+    :param model_folder: The folder containing the model checkpoints.
+    :return: The filename (not including the folder) of the checkpoint file.
+    """
+    checkpoint_files = filter(lambda x: '.chk-' in x and not x.endswith('.meta'), os.listdir(model_folder))
+    return max(checkpoint_files, key=lambda f: int(f.split('-')[-1]))
+

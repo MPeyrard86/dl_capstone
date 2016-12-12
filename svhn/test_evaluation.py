@@ -8,7 +8,7 @@ import numpy as np
 import tensorflow as tf
 
 from svhn import *
-from svhn.data_loader import load_data
+from svhn.data_loader import load_data, get_model_file
 
 def calculate_accuracy(y_pred, y_labels):
     predicted_labels = [x.flatten() for x in np.argmax(y_pred, 3).transpose()]
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     training_prediction_outputs = create_model(X, 1.0)
     training_prediction = tf.pack(
         [tf.nn.softmax(training_prediction_outputs[i]) for i in range(len(training_prediction_outputs))])
-    checkpoint_filename = os.path.join(args.model_folder, 'model_checkpoint.chk-149900')
+    checkpoint_filename = os.path.join(args.model_folder, get_model_file(args.model_folder))
     with tf.Session(graph=svhn_training_graph) as session:
         checkpoint_saver = tf.train.Saver()
         checkpoint_saver.restore(session, checkpoint_filename)
@@ -165,5 +165,4 @@ if __name__ == '__main__':
             test_predictions = session.run([training_prediction], fd)
             total_predictions += upper_bound - lower_bound
             correct_predictions += calculate_accuracy(test_predictions, labels[lower_bound:upper_bound])
-            print 100.0 * float(correct_predictions) / total_predictions
-        print 100.0 * float(correct_predictions)/total_predictions
+        print "Test set accuracy: %f%%"%(100.0 * float(correct_predictions)/total_predictions)

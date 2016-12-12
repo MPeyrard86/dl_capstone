@@ -7,11 +7,8 @@ import time
 import numpy as np
 import tensorflow as tf
 
-import scipy as sp
-import scipy.misc
-
 from svhn import *
-from svhn.data_loader import load_data, load_image_data
+from svhn.data_loader import load_image_data, get_model_file
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Evaluates a testing set.")
@@ -147,7 +144,7 @@ if __name__ == '__main__':
     training_prediction = tf.pack(
         [tf.nn.softmax(training_prediction_outputs[i]) for i in range(len(training_prediction_outputs))])
 
-    checkpoint_filename = os.path.join(args.model_folder, 'model_checkpoint.chk-149900')
+    checkpoint_filename = os.path.join(args.model_folder, get_model_file(args.model_folder))
     with open(os.path.join(args.output_folder, BATCH_OUTPUT_FILE), 'w') as predictions_file:
         predictions_file.write("filename,prediction\n")
         with tf.Session(graph=svhn_training_graph) as session:
@@ -168,4 +165,3 @@ if __name__ == '__main__':
                     prediction = ''.join(str(x) for x in filter(lambda y: y < 10, predicted_labels[i-lower_bound]))
                     predictions_file.write("%s,%s\n"%(image_files[i], prediction))
                 total_predictions += upper_bound - lower_bound
-

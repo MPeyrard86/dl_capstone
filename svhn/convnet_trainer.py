@@ -18,6 +18,7 @@ import scipy.misc
 import tensorflow as tf
 
 from svhn import *
+from svhn.data_loader import get_model_file
 
 USAGE_MESSAGE = """Usage: python convnet_trainer.py <input-data-folders>
 This script expects a set of training folders as parameters.
@@ -239,7 +240,7 @@ if __name__ == '__main__':
         mean_file.write(str(training_images_mean))
 
     training_stats_filename = os.path.join(training_stats_folder, TRAINING_STATS_FILE)
-    checkpoint_filename = os.path.join(training_stats_folder, 'model_checkpoint.chk')
+    checkpoint_filename = os.path.join(training_stats_folder, get_model_file(training_stats_folder))
     with open(training_stats_filename, 'w') as training_stats_file:
         training_stats_file.write("epoch,train_loss,train_acc,validation_acc\n")
         with tf.Session(graph=svhn_training_graph) as session:
