@@ -32,7 +32,7 @@ CONV8_DEPTH = 192
 FC1_LENGTH = 4096
 FC2_LENGTH = 4096
 
-# Learning Rates
+# Learning rates for exponential decay.
 INITIAL_LEARNING_RATE = 2.5e-2
 FINAL_LEARNING_RATE = 1e-3
 DECAY_EPOCHS = 1e5
@@ -51,5 +51,8 @@ EPOCH_GROUP_SIZE = 100
 # Maximum number of epochs.
 MAX_EPOCHS = 1000000
 
+# Accepted formats for the batch classifier.
 IMAGE_FORMATS = (".png", ".jpg")
+
+# Name of the batch classifier output file.
 BATCH_OUTPUT_FILE = "predictions.csv"
