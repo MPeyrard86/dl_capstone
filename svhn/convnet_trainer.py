@@ -73,10 +73,8 @@ def process_training_sample(folder, training_sample_line):
     :return: A training sample tuple (training_image, length_class, digit_classes)
     """
     split_line = training_sample_line.strip().split(',')
-    assert len(split_line) == 6
     training_image_path = os.path.join(folder, split_line[0])
     training_image_label = split_line[1]
-    assert os.path.exists(training_image_path)
     training_image = sp.misc.imread(training_image_path)
     left = int(split_line[2])
     top = int(split_line[3])
