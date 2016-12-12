@@ -165,6 +165,7 @@ if __name__ == '__main__':
                 test_predictions = session.run([training_prediction], fd)
                 predicted_labels = [x.flatten() for x in np.argmax(test_predictions, 3).transpose()]
                 for i in range(lower_bound,upper_bound):
-                    predictions_file.write("%s,%s\n"%(image_files[i], predicted_labels[i-lower_bound]))
+                    prediction = ''.join(str(x) for x in filter(lambda y: y < 10, predicted_labels[i-lower_bound]))
+                    predictions_file.write("%s,%s\n"%(image_files[i], prediction))
                 total_predictions += upper_bound - lower_bound
 

@@ -4,6 +4,14 @@
 \usepackage{graphicx}
 \usepackage{subfig}
 
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+
 \title{Detecting House Numbers in Street View Imagery using Convolutional Neural Networks}
 \author{Matthew Peyrard}
 \date{\today}
@@ -48,11 +56,11 @@ Furthermore, no partial credit is provided for the algorithm, meaning that a pre
 \subsection{Data Exploration} \label{sssec:data_exploration}
 The standard Street View House Number dataset\cite{svhn_dataset} was used for training and validation for this project. 
 This data set comes with three sets of images: training, testing and extra. 
-The training and testing data sets each consists of 33,402 and 13,068 images respectively. 
+The training and testing data sets each consist of 33,402 and 13,068 images respectively. 
 The extra dataset consists of over 200,000 images that are considered slightly easier, and are used as additional training and validation data. 
 Each of these datasets also contains a \textit{Matlab} file that provides the labels and bounding boxes for each of the digits in each image.
 For the purpose of this project, the Matlab file was converted into a CSV file that contained the image filename, digits and bounding boxes it contains. 
-The Matlab file was scrapped because loading it took an excessive amount of time to load the data into memory.
+The Matlab file was scrapped because it took an excessive amount of time to load the data into memory. 
 
 \begin{figure}
 \minipage{0.32\textwidth}
@@ -96,7 +104,7 @@ The Matlab file was scrapped because loading it took an excessive amount of time
 \label{fig:example_extra_imagery}
 \end{figure}
 
-Figures \ref{fig:example_imagery} and \ref{fig:example_test_imagery} demonstrates some examples of the kinds of imagery we are dealing with in the SVHN dataset for training and testing. 
+Figures \ref{fig:example_imagery} and \ref{fig:example_test_imagery} demonstrate some examples of the kinds of imagery we are dealing with in the SVHN dataset for training and testing. 
 As you can see, there is a lot of variability in both the image size and image quality. 
 For example in the center image, we can just barely tell that the first digit is a 1, but it could easily be misconstrued as a 7. 
 However, one advantage that is provided by this data set is that digits, while not necessarily front and center, are at least prominent within the image.
@@ -175,7 +183,7 @@ As demonstrated by Figure \ref{fig:digit_freq_plots}, the digit 1 is by far the 
 Similar to the digit length bias, this asymmetry creates a potential bias towards the digit 1 in the model's predictions.
 Even if there is not a bias, the model may be far more successful in recognizing 1's relative to other digits.
 
-\subsection{Algorithms and Techniques}
+\subsection{Algorithms and Techniques} \label{sssec:algs}
 In order to solve this problem, a convolutional neural network has been employed.
 Convolutional neural networks are currently the most successful model employed for most computer vision problems.
 For classification tasks, neural networks output a probability distribution representing their confidence in each class.
@@ -206,7 +214,7 @@ This algorithm contains several hyper-parameters:
 		\item The number of filters in each convolutional layer.
 		\item The receptive field size in each convolutional layer.
 		\item The stride and padding of the convolutional layers.
-		\item The size of the fully connect layers (in terms of units).
+		\item The size of the fully connected layers (in terms of units).
 		\item The training dropout rate.
 		\item The stride and padding of the max-pooling layers.
 	\end{itemize}
@@ -238,7 +246,7 @@ Upon initialization of the training algorithm, the training data is loaded from 
 The data is then split into training and validation sets.
 The split is performed by first randomly shuffling the data, and then randomly sampling 2,000 examples and setting them aside as the validation set.
 
-Following this step, the images are cropped based on the bounding boxes from the training file (CSV) and then resized to a $32 \times 32 \times 3$ numpy array.
+Following this step, the images are cropped based on the bounding boxes from the training file (CSV) and then resized to a $32 \times 32 \times 3$ NumPy array.
 The images are cropped in order to make sure the digits are front and centre.
 This helps the learning algorithm identify the digits better by reducing the amount of noise it has to deal with.
 In reality we would not be dealing with such convenient imagery, but this step is used as a placeholder for localization techniques that are beyond the scope of this project.
@@ -248,10 +256,58 @@ $\mu_t$ is then subtracted element-wise from all of the pixels in the training a
 The training mean is stored to disk because it must also be subtracted from any images we run as part of the testing or in production, since the model will be trained with such a normalization in mind.
 
 \subsection{Implementation}
+All applications created for this project were written in Python2 using TensorFlow, NumPy, and SciPy. 
+They were developed on a Linux desktop, and training was performed on a GTX 1080 GPU.
+All applications were written as command line applications.
+Development was done using the PyCharm IDE.
 
+The core of the project is in the convolutional neural network training application.
+The first step of this application is in loading and preparing the training data.
+The data is loaded baseed on the parameters provided at the command line. 
+The training data is expected to all be contained within a folder that contains the images and the CSV file providing the labels and bounding boxes.
+
+The CSV file contains all of the filenames of the images, and hence is loaded first.
+Once the CSV file is loaded the entries are shuffled, and 2,000 entries are randomly sampled and removed from the training set.
+These are reserved for validation and will not be used for training.
+
+When each image is loaded, its corresponding CSV entry is simultaneously loaded, and the resizing and cropping is performed at that time.
+All image loading and manipulation techniques are performed using SciPy, and the final image is stored as a NumPy array.
+After the image has been cropped and resized, the bounding boxes are discarded, and only the labels and images are kept in memory.
+The final result of this operation is two lists of equal size: The first containing all of the images, and the other containing all of the labels. They are returned as a 2-tuple from the image loading sub-routine.
+
+This process can be fairly CPU-intensive, and I found that while using the extra data set as training, the loading time would take several minutes. 
+Therefore, the data loading algorithm was augmented to use Python's multiprocessing library.
+Now the algorithm will use all available (logical) CPUs to perform the data import.
+Now the loading time (on my home computer) takes only a few seconds instead of over three minutes.
+
+The final step in the data loading process is to compute the mean pixel value $\mu_t$ across all of the images in the data set.
+This value is subsequently subtracted from each image as a normalization step.
+Furthermore, since this mean would need to be subtracted from images processed during the test or production phases, the value is written out to a text file in the output folder.
+
+The next step is to construct the computational graph.
+This is done using raw TensorFlow.
+Initially Keras was used to create the graph, but I found it to be limited when it came to constructing networks with multiple outputs.
+
+Before the training process begins, a model Saver is created targeting the output directory (provided at the command line).
+Training samples are provided to the graph in batches that are randomly sampled from the training set.
+Furthermore, every 100 iterations the entire validation set is run (as a single batch) and its accuracy computed.
+If the accuracy of the validation set is the best seen so far, then the model is checkpointed to the output directory.
+I also keep a record of all of the training and validation accuracies (as well as the training loss) every 100 iterations, which are written to a CSV file in the output directory.
+This CSV file is used by another Python application I wrote that generates PyPlot graphs that summarize the performance of the training algorithm over time.
+
+There are two other applications that load the data that is output by the training program.
+The first is an application that is solely responsible for running tests against a labelled data set.
+It uses all of the same data loading techniques as the training program, but it loads the model from disk (the output of the training program) and does not perform any of the back-propagation. 
+Instead, it simply tallies the accuracies from all of the testing batches and outputs the result.
+
+The second application is meant to be used in production.
+It is invoked on the command line and consumes a batch of unlabelled images and produces a CSV file with the predictions for each file.
+This application uses a slightly simpler data loading algorithm.
+It has no bounding boxes, therefore it only resizes the image instead of cropping it. 
+It does, however, have access to the training mean file that was produced by the training program, therefore it is able to perform normalization on the input images.
 
 \subsection{Refinement}
-The biggest sources of improvement during this project was the adjustment of the learning rate and increasing the size of the network.
+The largest sources of improvement during this project were the adjustment of the learning rate and increasing the size of the network.
 The network was initially half the size of the final architecture, with four convolutional layers, and one fully connected layer.
 The learning rate was initially set statically to 0.05, which was good enough to get the model off the ground, but it often got stuck at around 40\% accuracy. 
 Such a learning rate was clearly too high to allow the optimizer to find the smaller crevices that lead to higher accuracies. 
@@ -317,11 +373,20 @@ The Adagrad optimizer was used with exponential decay. I used an initial learnin
 
 \subsection{Justification} \label{sssec:justification}
 For this evaluation, two different models were used.
-For the first model, only the training set was used for training, and achieved a validation accuracy of 89.9\% and a training accuracy of 82.7\%, which falls short of the 85\% goal I set for myself.
+For the first model, only the training set was used for training, and achieved a validation accuracy of 89.9\% and a testing accuracy of 82.7\%, which falls short of the 85\% goal I set for myself.
 These results are shown in Figure \ref{fig:final_lessdata}.
 However, the same model's accuracy when testing on the extra data set (which was not used for any kind of training) achieved 95.8\% accuracy.
-The second model used both the training and extra sets for training, and achieved a validation accuracy of 96\% and a test accuracy of 88.8\% on the test set.
+The second model used both the training and extra sets for training, and achieved a validation accuracy of 96\% and a testing accuracy of 88.8\% on the testing set.
 These results are shown in Figure \ref{fig:final_moredata}.
+
+Additional testing was performed on a custom data set that was collected from the internet, as well as from my own neighborhood.
+These results are called the \textit{custom} data set, and can be found in the uploaded data \footnote{All project data can be found \href{https://drive.google.com/open?id=0B918sU9DDf8DTElNWGhwN1pTTXM}{here}.}.
+What these experiments made clear was that there is one major weakness in the approach taken for this project.
+That weakness is that the algorithm has a very fragile sense of localization.
+The algorithm performed very poorly on any imagery that was not cropped such that the digits were front and center.
+If the digits were not the prominent elements in the image, then the output is completely incorrect.
+However, if appropriate cropping is performed, then performance improves dramatically, and comes in line with the observed results from the training and validation sets.
+These results are visualized in Section \ref{sssec:ffv}, and potential solutions to the aforementioned shortcomings are discussed in Section \ref{sssec:improvement}.
 
 \begin{figure}
 \centering
@@ -352,10 +417,112 @@ These results are shown in Figure \ref{fig:final_moredata}.
 \end{figure}
 
 \section{Conclusion}
-\subsection{Free-Form Visualization}
-\subsection{Reflection}
-\subsection{Improvement}
+\subsection{Free-Form Visualization} \label{sssec:ffv}
+Figure \ref{fig:custom_visualizations} demonstrates some of the weaknesses of this algorithm.
+The results of the first pair of images are not altogether surprising.
+The algorithm was not trained to evaluate text, and therefore it is not surprising that text confuses the algorithm.
 
+The remaining images demonstrate the algorithm's utter inability to cope with external objects. 
+Even in the cropped image, we can see that it made an error. 
+I would hypothesize that it got confused by the shadow cast by the 1, and interpreted it as an extra digit.
+The root of this problem is likely the cropping of the training data.
+The algorithm has not had much of an opportunity to observe noise in the data and thus learn the difference between digits and background objects such as bricks and lamps.
+
+\begin{figure}[!htb]
+\centering
+\subfloat[Original image. Predicted label: 32.\label{fig:custom1}] {
+	\centering
+	\includegraphics[width=0.45\columnwidth]{images/custom/2.jpg}
+}\hfill
+\subfloat[Cropped image. Predicted label: 2\label{fig:custom1_cropped}] {
+	\centering
+	\includegraphics[scale=0.25]{images/custom/2-cropped.png}
+}\hfill
+
+\subfloat[Original image. Predicted label: 266.\label{fig:custom2}] {
+	\centering
+	\includegraphics[width=0.45\columnwidth]{images/custom/1103.jpg}
+}\hfill
+\subfloat[Cropped image. Predicted label: 11103.\label{fig:custom2_cropped}] {
+	\centering
+	\includegraphics[scale=0.60]{images/custom/1103-cropped.png}
+}\hfill
+
+\subfloat[Original image. Predicted label: 188.\label{fig:custom3}] {
+	\centering
+	\includegraphics[width=0.45\columnwidth]{images/custom/1885.jpg}
+}\hfill
+\subfloat[Cropped image. Predicted label: 1885.\label{fig:custom3_cropped}] {
+	\centering
+	\includegraphics[scale=0.35]{images/custom/1885-cropped.png}
+}\hfill
+
+\end{figure}
+\clearpage
+\begin{figure}[!htb]
+\centering
+\ContinuedFloat
+
+\subfloat[Original image. Predicted label: 393.\label{fig:custom4}] {
+	\centering
+	\includegraphics[width=0.45\columnwidth]{images/custom/3938.jpg}
+}\hfill
+\subfloat[Cropped image. Predicted label: 3938.\label{fig:custom4_cropped}] {
+	\centering
+	\includegraphics[scale=0.70]{images/custom/3938-cropped.png}
+}\hfill
+
+\subfloat[Original image. Predicted label: 472.\label{fig:custom5}] {
+	\centering
+	\includegraphics[width=0.45\columnwidth]{images/custom/4424.jpg}
+}\hfill
+\subfloat[Cropped image. Predicted label: 4424.\label{fig:custom5_cropped}] {
+	\centering
+	\includegraphics[scale=0.12]{images/custom/4424-cropped.jpg}
+}\hfill
+\caption{Summary of randomly collected extra imagery. This imagery was used to test how the algorithm generalizes. Each image is presented in its original form, as well as its cropped form, showing the digits prominently in the image.}
+\label{fig:custom_visualizations}
+\end{figure}
+
+\subsection{Reflection} \label{sssec:reflection}
+The steps taken to complete this project are as follows:
+
+\begin{enumerate}
+\item The problem was studied, including existing implementations outlined in the original papers \cite{svhn_original_paper,svhn_lrn}.
+\item The data set used in the original papers was downloaded and analyzed.
+\item Experiments were run in loading, resizing and enhancing the imagery. 
+\item The SVHN data set comes in an HD5 file set, which I found to be extremely slow to load and manipulate. Therefore, as the next step, I wrote an application that loads the HD5 files and exports their contents (labels, bounding boxes, etc.) to a CSV format. This was vastly more effecient in terms of loading times.
+\item To aid in the analysis, an application was written to load the data from the CSV files and generate various charts and graphs using pyplot. Those visualizations are shown in Section \ref{sssec:algs}.
+\item An application was written to do the convolutional neural network training. This is where the majority of the time was spent on this project. This application would load the training data and use it to train the network. The training and validation accuracy was recorded and used as a guide for how to checkpoint the model.
+\item In order to test how the model performs on unseen (but still labelled) data sets, another application was written that would load data with labels and run the model against it. This application would calculate the accuracy using the labels.
+\item In order to visualize the results of the training stages, an application was written to construct pyplots from the training outputs. Those visualizations are shown in Section \ref{sssec:justification}.
+\item Finally, the batch processing application was written that could consume a data set not containing labels and produce a set of predictions.
+\end{enumerate}
+
+The most difficult and interesting part of this project was in training the CNN. 
+The first several attempts to create the network yielded very poor results, at or near 0\% accuracy.
+This ended up being a combination of flaws in my understanding of the TensorFlow library, as well as flaws in my understanding of how to properly construct a neural network.
+The arduous process of getting it to work for the first time was truly educational.
+
+The next most difficult aspect was tuning the various parameters of the network to improve performance.
+Experiments often take a fairly long time, and thus required a lot of patience.
+
+\subsection{Improvement} \label{sssec:improvement}
+The primary improvement that the algorithm requires is the ability to locate likely positions of digits all by itself.
+If the locations of potential digits could be learned, then the algorithm could take sub-samples of the images from those predicted locations and perform the cropping by itself.
+
+This could potentially also solve the issue of the algorithm becoming confused by background noise. 
+This is because the training process would not need to use cropped imagery, therefore allowing the algorithm to be exposed to all kinds of background noise.
+If the algorithm were to be exposed to extensive background noise, then it would also learn that not everything is a digit, which could potentially address a lot of the issues displayed in Section \ref{sssec:ffv}.
+
+This would also mean that imagery that is input into the system at production time would not need to be cropped.
+As it stands, such a requirement completely invalidates the use of the algorithm, because if you need a human to crop the image, you might as well just have them do the classification instead.
+
+Another consequence of introducing localization would be that it might be possible to do away with the 5-digit limit on the classifier.
+If all potential locations could be examined, and digits identified, then in theory all digits in the image could be output.
+This introduces a new problem, however. And that would be how to order and group the numbers. 
+One could imagine another neural network (or even a hand-crafted algorithm) that could be fed the positions of all of the digits, as well as their dimensions, and produce a prediction of whether or not they are in the same group, as well as which order they belong in.
+Such a system could identify all digits in abritrarily sized images, as well as being likely able to classify text. 
 
 \begin{thebibliography}{9}
 \bibitem{svhn_dataset} 

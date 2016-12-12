@@ -238,59 +238,31 @@ if __name__ == '__main__':
     with open(mean_filename, 'w') as mean_file:
         mean_file.write(str(training_images_mean))
 
-    if args.resume_from is None:
-        training_stats_filename = os.path.join(training_stats_folder, TRAINING_STATS_FILE)
-        checkpoint_filename = os.path.join(training_stats_folder, 'model_checkpoint.chk')
-        with open(training_stats_filename, 'w') as training_stats_file:
-            training_stats_file.write("epoch,train_loss,train_acc,validation_acc\n")
-            with tf.Session(graph=svhn_training_graph) as session:
-                checkpoint_saver = tf.train.Saver()
-                tf.initialize_all_variables().run()
-                best_validation_accuracy = float(0)
-                for epoch in xrange(1, MAX_EPOCHS+1):
-                    training_batch = sample_training(training_set, args.batch_size)
-                    train_feed_dict = {X_train: training_batch[0], y_digits: training_batch[1]}
-                    _, t_loss, t_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
-                    if epoch%EPOCH_GROUP_SIZE == 0:
-                        tacc = 100.0*calculate_accuracy(t_pred, training_batch[1])
-                        vacc = 100.0*calculate_accuracy(validation_prediction.eval(), validation_labels)
-                        training_stats_file.write("%d,%f,%f,%f\n" % (epoch, t_loss, tacc, vacc))
-                        training_stats_file.flush()
+    training_stats_filename = os.path.join(training_stats_folder, TRAINING_STATS_FILE)
+    checkpoint_filename = os.path.join(training_stats_folder, 'model_checkpoint.chk')
+    with open(training_stats_filename, 'w') as training_stats_file:
+        training_stats_file.write("epoch,train_loss,train_acc,validation_acc\n")
+        with tf.Session(graph=svhn_training_graph) as session:
+            checkpoint_saver = tf.train.Saver()
+            tf.initialize_all_variables().run()
+            best_validation_accuracy = float(0)
+            for epoch in xrange(1, MAX_EPOCHS+1):
+                training_batch = sample_training(training_set, args.batch_size)
+                train_feed_dict = {X_train: training_batch[0], y_digits: training_batch[1]}
+                _, t_loss, t_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
+                if epoch%EPOCH_GROUP_SIZE == 0:
+                    tacc = 100.0*calculate_accuracy(t_pred, training_batch[1])
+                    vacc = 100.0*calculate_accuracy(validation_prediction.eval(), validation_labels)
+                    training_stats_file.write("%d,%f,%f,%f\n" % (epoch, t_loss, tacc, vacc))
+                    training_stats_file.flush()
 
-                        print "training loss at step %d: %.2f"%(epoch, t_loss)
-                        print "training accuracy: %.2f%%"%(tacc)
-                        print "validation accuracy: %.2f%%"%(vacc)
-                        if vacc > best_validation_accuracy:
-                            best_validation_accuracy = vacc
-                            print "Best validation accuracy seen so far. Checkpointing..."
-                            checkpoint_saver.save(session, checkpoint_filename, global_step=global_step)
-                        else:
-                            print "Best so far is %.2f%%"%(best_validation_accuracy)
-                        print
-    else:
-        training_stats_folder = args.resume_from
-        training_stats_filename = os.path.join(training_stats_folder, 'training_stats.csv')
-        checkpoint_filename = os.path.join(training_stats_folder, 'model_checkpoint.chk')
-        with open(training_stats_filename, 'a') as training_stats_file:
-            with tf.Session(graph=svhn_training_graph) as session:
-                checkpoint_saver = tf.train.Saver()
-                checkpoint_saver.restore(session, checkpoint_filename)
-                best_validation_accuracy = float(0)
-                for epoch in xrange(1, MAX_EPOCHS + 1):
-                    training_batch = sample_training(training_set, args.batch_size)
-                    train_feed_dict = {X_train: training_batch[0], y_digits: training_batch[1]}
-                    _, t_loss, t_pred = session.run([optimizer, training_loss, training_prediction], train_feed_dict)
-                    if epoch % EPOCH_GROUP_SIZE == 0:
-                        tacc = 100.0 * calculate_accuracy(t_pred, training_batch[1])
-                        vacc = 100.0 * calculate_accuracy(validation_prediction.eval(), validation_labels)
-                        training_stats_file.write("%d,%f,%f,%f\n" % (epoch, t_loss, tacc, vacc))
-                        training_stats_file.flush()
-
-                        print "training loss at step %d: %.2f" % (epoch, t_loss)
-                        print "training accuracy: %.2f%%" % (tacc)
-                        print "validation accuracy: %.2f%%" % (vacc)
-                        if vacc > best_validation_accuracy:
-                            best_validation_accuracy = vacc
-                            print "Best validation accuracy seen so far. Checkpointing..."
-                            checkpoint_saver.save(session, checkpoint_filename)
-                        print
+                    print "training loss at step %d: %.2f"%(epoch, t_loss)
+                    print "training accuracy: %.2f%%"%(tacc)
+                    print "validation accuracy: %.2f%%"%(vacc)
+                    if vacc > best_validation_accuracy:
+                        best_validation_accuracy = vacc
+                        print "Best validation accuracy seen so far. Checkpointing..."
+                        checkpoint_saver.save(session, checkpoint_filename, global_step=global_step)
+                    else:
+                        print "Best so far is %.2f%%"%(best_validation_accuracy)
+                    print
