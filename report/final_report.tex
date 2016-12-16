@@ -192,9 +192,24 @@ Convolutional neural networks are currently the most successful model employed f
 For classification tasks, neural networks output a probability distribution representing their confidence in each class.
 The prediction of the network is chosen as the label with the highest confidence probability score.
 
-Neural networks do not inherently emit probabilities.
+Convolutional layers use a technique called \textit{convolution}.
+Convolution is the process of finding features in images by breaking them down into smaller parts.
+The process maps the image into a new form by taking a sliding window, usually $3 \times 3$ or $5 \times 5$, and comparing each window against a set of filters (which represent the set of features). 
+The result of this comparison is the dot product of the window and the given filter, and is used as the output pixel value.
+This resulting image is interpreted a map of where each feature was observed within the image.
+This method is very powerful because we don't need to worry about the location of objects within the image; the sliding windows will discover the features wherever they happen to exist.
+
+Expanding on this, we can now create a hierarchy of features that we can stack together to recognize increasingly complex objects.
+Simple features usually comprise of edges of various orientation.
+These edges could then be combined to recognize elementary shapes.
+These shapes could then be combined to recognize objects such as eyes, noses, or mouths.
+And finally those features could be combined to recognize faces.
+
+When convolutional neural networks are used for classification problems, the outputs are traditionally a vector in $\mathbb{R}^n$, where $n$ is the number of classes abd each element is a confidence level in that particular class. 
+Furthermore, these confidence levels are expected to represent a probability distribution, and therefore sum to 1.
+However, neural networks do not inherently emit probabilities.
 The outputs of neural networks are fundamentally just weighted sums of the input values passed through a non-linear function, the combination of which is not guaranteed to sum to 1.
-An additional technique (layer) is required to achieve this effect, the most common of which (and the one used in this project) is the \textit{softmax} function.
+An additional technique (network layer) is required to achieve this effect, the most common of which (and the one used in this project) is the \textit{softmax} function.
 This technique essentially uses proportional representation to scale all of the values of a vector in $\mathbb{R}^n$ such that they sum to 1.
 It is defined element-wise as follows:
 
@@ -209,7 +224,7 @@ This is because it cannot depend upon any particular representation being consis
 
 Another technique used to help prevent overfitting is \textit{max pooling}.
 Max pooling is the process of down-sampling the image by taking the maximum pixel value within square grid areas across the entire image.
-For example \footnote{Image courtesy of http://cs231n.github.io/convolutional-networks/}:
+For example \footnote{Max pooling image source: http://cs231n.github.io/convolutional-networks/}:
 
 \hfill \break
 \begin{centering}
