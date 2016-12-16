@@ -3,6 +3,7 @@
 \usepackage[english]{babel}
 \usepackage{graphicx}
 \usepackage{subfig}
+\usepackage{amssymb}
 
 \usepackage{hyperref}
 \hypersetup{
@@ -40,6 +41,8 @@ The tasks involved in solving this problem are the following:
 	\item Build an application that uses the trained model to produce predictions from input imagery.
 \end{enumerate}
 
+The classifier is meant to learn and classify images containing multiple digits. It will be trained to recognize all digits in the image, and to put them together in the correct order.
+
 The application is meant to be used for batch data on the command line, as the purpose is to automate the digit classification part of a street view ingest pipeline.
 
 \subsection{Metrics}
@@ -49,8 +52,8 @@ The validation data is segregated from the rest of the training data, and only u
 The performance of these periodic validation evaluations determines how we do checkpointing for the algorithm.
 The model state is persisted to disk (checkpointed) whenever the performance of the model on the validation set has improved.
 
-In this problem domain the output of the classifier is either correct, or it is not, therefore the accuracy is simply measured as the ratio of correct predctions to the total number of predictions.
-Furthermore, no partial credit is provided for the algorithm, meaning that a prediction is correct if and only if all digits in the image are predicted correctly.
+In this problem domain the output of the classifier is either correct, or it is not, therefore the accuracy is simply measured as the ratio of correct predictions to the total number of predictions.
+Furthermore, since this is a multi-digit recognition model, a prediction is considered correct if and only if all digits in the image are predicted correctly.
 
 \section{Analysis}
 \subsection{Data Exploration} \label{sssec:data_exploration}
@@ -189,15 +192,49 @@ Convolutional neural networks are currently the most successful model employed f
 For classification tasks, neural networks output a probability distribution representing their confidence in each class.
 The prediction of the network is chosen as the label with the highest confidence probability score.
 
-In this case, we have used an architecture similar to the one described in the original paper \cite{svhn_original_paper}, which means that we will have a unique softmax classifier for each digit in the house number.
+Neural networks do not inherently emit probabilities.
+The outputs of neural networks are fundamentally just weighted sums of the input values passed through a non-linear function, the combination of which is not guaranteed to sum to 1.
+An additional technique (layer) is required to achieve this effect, the most common of which (and the one used in this project) is the \textit{softmax} function.
+This technique essentially uses proportional representation to scale all of the values of a vector in $\mathbb{R}^n$ such that they sum to 1.
+It is defined element-wise as follows:
+
+\begin{equation}
+	S(x)_j = \frac{\exp(x_j)}{\sum_{i=1}^{n} \exp(x_i)}
+\end{equation}
+
+Overfitting was combatted by using a technique called \textit{dropout}\cite{svhn_dropout}.
+Dropout layers will randomly set the output of a neuron to 0 (at training time only).
+This has the effect of forcing the neural network to learn alternate representations of the input data.
+This is because it cannot depend upon any particular representation being consistently correct during the training process.
+
+Another technique used to help prevent overfitting is \textit{max pooling}.
+Max pooling is the process of down-sampling the image by taking the maximum pixel value within square grid areas across the entire image.
+For example \footnote{Image courtesy of http://cs231n.github.io/convolutional-networks/}:
+
+\hfill \break
+\begin{centering}
+	\includegraphics[width=0.85\columnwidth]{images/maxpool.jpg}
+	\label{Testing}
+\end{centering}
+\hfill \break
+
+Max pooling reduces overfitting by gradually reducing the number of parameters in the model.
+This also has the added benefit of reducing computational complexity. 
+
+Initialization of the weights in the network was done using Xavier initialization \cite{xavier}.
+Xavier initialization is a technique for controlling the variance of the inputs and outputs of a layer of neurons, aiming to keep them more or less the same.
+If these variances are not controlled, then it would be possible for the gradiants passing through the network to either vanish or grow exponentially, making the network useless. 
+This effect would depend on the size of the network, as well as what the initial values are set to.
+By controlling the variances, we are ensuring that the weights stay within a consistent range of values across all layers in the network, allowing the gradiants emitted from one layer to be sensible when processed by the next.
+
+For this project, I have used an architecture similar to the one described in the original paper \cite{svhn_original_paper}, which means that we will have a unique softmax classifier for each digit in the house number.
 This does, however, mean that there is a hard limit on the number of digits that can be recognized by the model.
 As in the original paper, I have chosen that limit to be five.
-One divergance from the original paper is the lack of a length prediction classifier.
+One divergence from the original paper is the lack of a length prediction classifier.
 In the original paper, if a house number was less than five digits long, then the prediction would have random predictions for the stranded digits.
 This was remedied by a sixth classifier output that would provide the digit length, thereby allowing you to determine which digits were true predictions.
 
 While this approach was tested during this project, superior results were achieved by discarding the length prediction and simply introducing a placeholder digit class to signify that the digit does not exist in the picture.
-This approach yielded results superior to the length prediction strategy.
 
 This algorithm contains several hyper-parameters:
 
@@ -308,20 +345,46 @@ It does, however, have access to the training mean file that was produced by the
 
 \subsection{Refinement}
 The largest sources of improvement during this project were the adjustment of the learning rate and increasing the size of the network.
-The network was initially half the size of the final architecture, with four convolutional layers, and one fully connected layer.
-The learning rate was initially set statically to 0.05, which was good enough to get the model off the ground, but it often got stuck at around 40\% accuracy. 
-Such a learning rate was clearly too high to allow the optimizer to find the smaller crevices that lead to higher accuracies. 
-In response to this, some major performance improvements were gained by lowering the learning rate to 0.025 and introducing the exponential decay.
-This allowed the accuracy to increase to 80\%, however once it reached this point, the network would suddenly jump out of its current optimum, and land somewhere completely sub-optimal. 
+
+The initial network consisted of four convolutional layers and one fully connected layer which then lead to five output layers.
+The convolutional layers had depths of 48, 64, 128 and 160.
+The fully connected layer consisted of 2048 units.
+This was followed by five softmax classifiers (one for each digit) as the output layers.
+Max pooling was used after the second and fourth convolutional layers, reducing the image by half each time.
+Dropout was also used on the first and third convolutional layers, as well as the fully connected layer, each time with a dropout probability of 50\%.
+The convolutional layers each used $5 \times 5$ receptive fields with a stride of 1.
+All weights were initialized using Xavier initialization \cite{xavier}.
+
+The learning rate was initially set statically to 0.05.
+This allowed the accuracy to reach 80\%, however once it reached this point, the network would suddenly jump out of its current optimum, and land somewhere completely sub-optimal. 
 This can be seen in Figure \ref{fig:small_network_results}.
 Whether this was a Tensorflow bug, or as a result of a flawed architecture, was not discernable.
-However, by increasing the network size, in addition to the changes in the learning rate, the accuracy (on the validation set) was able to exceed 90\%. 
+However, I suspect that the learning rate was the real culprit.
+Such a learning rate was clearly too high to allow the optimizer to find the smaller crevices of the cost function that lead to higher accuracies.
+
+In response to this the learning rate was lowered to 0.025, and set to exponentially decay to 0.001.
+Furthermore, the size of the network was doubled to its final form, which is outlined in detail in Section \ref{sssec:evaluation}.
+With these changes, the accuracy (on the validation set) was able to exceed 90\%. 
 Those results are discussed in Section \ref{sssec:justification}.
 
-There were two methods for this, the most successful of which has been outlined in Section \ref{sssec:evaluation}.
-The second method was the one described in the original paper \cite{svhn_original_paper}, which uses length prediction in place of placeholder digits.
+Adding additional layers obviously increases the size of the model and allows it to learn a greater variety of features.
+However, I observed the biggest gain in performance by adjusting the learning rate and introducing exponential decay.
+As previously discussed, lowering the learning rate would allow it to navigate to smaller crevices of the cost function.
+However, there is some utility in allowing a larger learning rate at the beginning of the learning process. 
+At the beginning of the process, the model is more or less randomly initialized.
+This means that the model is likely to be nowhere near the optimal solution.
+A larger initial learning rate would therefore allow it to more quickly navigate to the general vicinity of the optimal solution.
+Once the model has reached such a region, then it makes intuitive sense to start lowering the learning rate, as the steps required to improve become increasingly nuanced.
+Keeping a large learning rate could cause the optimizer to overshoot the narrower valleys in the cost function.
+In theory, such a high learning rate could actually cause the optimizer to \textit{diverge}, as the momentum of such a high learning rate could expell the model from a valley in the cost function.
+I suspect that this is a possible cause of the phenomena observed in Figure \ref{fig:small_network_results}, and hence why performance not only improved with a smaller learning rate, but became more stable.
+
+There were two approaches attempted with the final architecture.
+The most successful of which has been outlined in Section \ref{sssec:evaluation}.
+The second method was the one described in the original paper \cite{svhn_original_paper}, which uses length prediction instead of placeholder digits.
 The length prediction method was attempted and achieved a 90.1\% validation accuracy, which is shown in Figure \ref{fig:length_best_results}.
-This result was impressive, but the result of 96\% using placeholder digits easily eclisped it.
+This result was impressive, but the result of 96\% using placeholder digits easily eclipsed it.
+The results of that run are demonstrated in Figure \ref{fig:final_moredata}.
 
 \begin{figure}[!htb]
 \centering
@@ -351,8 +414,6 @@ This result was impressive, but the result of 96\% using placeholder digits easi
 \label{fig:small_network_results}
 \end{figure}
 
-
-
 \section{Results}
 \subsection{Model Evaluation and Validation} \label{sssec:evaluation}
 The final architecture of the neural network is roughly based on the design outlined in the original paper \cite{svhn_original_paper}.
@@ -367,7 +428,7 @@ Every convolutional layer and pre-output fully connected layer uses ReLU\cite{re
 The convolutional kernel size for all convolutional layers was $5 \times 5$, along with a stride of 1.
 
 Max pooling was used twice, once following convolutional layer 4, and again following convolutional layer 8.
-Both max pooling layers used $2 \times 2$ windows with a stride of 1.
+Both max pooling layers used $2 \times 2$ windows with a stride of 2.
 
 The Adagrad optimizer was used with exponential decay. I used an initial learning rate $\alpha_0 = 0.025$, decaying over the course of 50,000 epochs to a final learning rate of 0.001.
 
@@ -398,7 +459,7 @@ These results are visualized in Section \ref{sssec:ffv}, and potential solutions
 	\centering
 	\includegraphics[width=0.45\columnwidth]{images/results/accuracy_lessdata.png}
 }\hfill
-\caption{Plot of run using smaller convolutional network, $\alpha_0 = 0.025$, 50,000 epoch decay to 0.001. Trained using just the training set.}
+\caption{Plot of run using larger convolutional network, $\alpha_0 = 0.025$, 50,000 epoch decay to 0.001. Trained using just the training set.}
 \label{fig:final_lessdata}
 \end{figure}
 
@@ -412,7 +473,7 @@ These results are visualized in Section \ref{sssec:ffv}, and potential solutions
 	\centering
 	\includegraphics[width=0.45\columnwidth]{images/results/accuracy_moredata.png}
 }\hfill
-\caption{Plot of run using smaller convolutional network, $\alpha_0 = 0.025$, 50,000 epoch decay to 0.001. Trained using the union of training and extra sets.}
+\caption{Plot of run using larger convolutional network, $\alpha_0 = 0.025$, 50,000 epoch decay to 0.001. Trained using the union of training and extra sets.}
 \label{fig:final_moredata}
 \end{figure}
 
@@ -541,6 +602,9 @@ Nitish Srivastava, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever, Ruslan Sala
 \bibitem{relu}
 R Hahnloser, R. Sarpeshkar, M A Mahowald, R. J. Douglas, H.S. Seung (2000). 
 \textit{Digital selection and analogue amplification coesist in a cortex-inspired silicon circuit.}
+\bibitem{xavier}
+Xavier Glorot, Yoshua Bengio
+\textit{Understanding the difficulty of training deep feedforward neural networks}
 
 \end{thebibliography}
 	
